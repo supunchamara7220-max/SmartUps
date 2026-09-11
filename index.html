@@ -411,8 +411,8 @@
                 </div>
             </div>
 
-            <!-- Switches Grid -->
-            <div id="switchesListContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Switches Grid (Divided by Sections 1, 2, 3, 4) -->
+            <div id="switchesListContainer" class="space-y-6">
                 <!-- Dynamically populated by app.js -->
             </div>
         </section>
@@ -619,10 +619,45 @@
                         <span id="cfgDeviceTypeBadge" class="text-xs px-2.5 py-1 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-500/30 font-mono">SWITCH</span>
                     </div>
 
-                    <form id="pairingConfigForm" class="space-y-3">
+                    <form id="pairingConfigForm" class="space-y-3.5">
                         <div>
                             <label class="block text-xs font-semibold text-slate-300 mb-1">Device Label / Name</label>
                             <input type="text" id="cfgDeviceName" required class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:border-cyan-400 focus:outline-none">
+                        </div>
+
+                        <!-- Section Allocation & Labeling (For Smart Switches) -->
+                        <div id="cfgSectionGroup" class="p-3.5 rounded-xl bg-slate-900/90 border border-cyan-500/30 space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <label class="block text-xs font-semibold text-white flex items-center gap-1.5">
+                                    <span class="text-cyan-400">⚡</span>
+                                    <span>Smart Switch Section Division (1 – 4)</span>
+                                </label>
+                                <span class="text-[10px] text-cyan-400 font-mono">Circuit Group</span>
+                            </div>
+                            <div class="grid grid-cols-4 gap-2 text-xs font-mono">
+                                <button type="button" class="btn-select-cfg-section py-2 px-1 rounded-lg border text-center transition-all cursor-pointer border-cyan-500 bg-cyan-950/60 text-cyan-300 font-bold shadow-sm shadow-cyan-500/20" data-section="1">
+                                    Sec 1
+                                </button>
+                                <button type="button" class="btn-select-cfg-section py-2 px-1 rounded-lg border text-center transition-all cursor-pointer border-slate-700 bg-slate-950 text-slate-400 hover:border-slate-600" data-section="2">
+                                    Sec 2
+                                </button>
+                                <button type="button" class="btn-select-cfg-section py-2 px-1 rounded-lg border text-center transition-all cursor-pointer border-slate-700 bg-slate-950 text-slate-400 hover:border-slate-600" data-section="3">
+                                    Sec 3
+                                </button>
+                                <button type="button" class="btn-select-cfg-section py-2 px-1 rounded-lg border text-center transition-all cursor-pointer border-slate-700 bg-slate-950 text-slate-400 hover:border-slate-600" data-section="4">
+                                    Sec 4
+                                </button>
+                            </div>
+                            <input type="hidden" id="cfgSectionValue" value="1">
+
+                            <!-- Section Labeling function -->
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-300 mb-1 flex items-center justify-between">
+                                    <span>Section Label / Circuit Function</span>
+                                    <span class="text-[10px] text-slate-500 font-mono">Custom Section Name</span>
+                                </label>
+                                <input type="text" id="cfgSectionLabel" placeholder="e.g. Main Server & Core" class="w-full px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-700 text-white text-xs font-mono focus:border-cyan-400 focus:outline-none">
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -644,15 +679,18 @@
                                     <option value="essential" selected>Essential (Shed at &lt;20% batt)</option>
                                     <option value="non-essential">Non-Essential (Shed on grid loss)</option>
                                 </select>
+                                <p id="cfgPriorityExplainer" class="text-[10px] text-cyan-400 font-mono mt-1">
+                                    ⚡ Sheds at &lt;20% battery during prolonged outage.
+                                </p>
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-3 pt-2">
+                        <div class="flex items-center gap-3 pt-1">
                             <input type="checkbox" id="cfgInitialState" checked class="w-4 h-4 rounded border-slate-700 text-cyan-500 focus:ring-cyan-500 bg-slate-950">
                             <label for="cfgInitialState" class="text-xs text-slate-300 font-medium">Energize relay immediately upon pairing (Turn ON)</label>
                         </div>
 
-                        <div class="pt-3">
+                        <div class="pt-2">
                             <button type="submit" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black font-bold text-sm shadow-lg shadow-emerald-500/20 transition-all cursor-pointer">
                                 Complete Commissioning & Add to Dashboard ✓
                             </button>
@@ -757,11 +795,11 @@
     </div>
 
     <!-- Application Scripts with Cache-Busters -->
-    <script src="js/data.js?v=4.3.5"></script>
-    <script src="js/auth.js?v=4.3.5"></script>
-    <script src="js/ups.js?v=4.3.5"></script>
-    <script src="js/charts.js?v=4.3.5"></script>
-    <script src="js/pairing.js?v=4.3.5"></script>
-    <script src="js/app.js?v=4.3.5"></script>
+    <script src="js/data.js?v=4.3.6"></script>
+    <script src="js/auth.js?v=4.3.6"></script>
+    <script src="js/ups.js?v=4.3.6"></script>
+    <script src="js/charts.js?v=4.3.6"></script>
+    <script src="js/pairing.js?v=4.3.6"></script>
+    <script src="js/app.js?v=4.3.6"></script>
 </body>
 </html>

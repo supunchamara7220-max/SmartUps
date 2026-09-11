@@ -6,6 +6,7 @@
 class SmartUpsEngine {
     constructor() {
         this.data = getSystemData();
+        this.ensureSectionLabels();
         this.audioCtx = null;
         this.listeners = [];
         this.timerInterval = null;
@@ -16,8 +17,20 @@ class SmartUpsEngine {
         // Listen for user login/logout to switch user device storage immediately
         window.addEventListener('smartups:auth-changed', (e) => {
             this.data = getSystemData(e.detail ? e.detail.user : null);
+            this.ensureSectionLabels();
             this.notifyUpdate();
         });
+    }
+
+    ensureSectionLabels() {
+        if (!this.data.sectionLabels) {
+            this.data.sectionLabels = {
+                1: "Main Server & Core",
+                2: "Workstations & Lab",
+                3: "Lighting & Climate",
+                4: "Auxiliary & General"
+            };
+        }
     }
 
     // Web Audio API Relay & Alert Synthesizer (no external audio files needed)
@@ -423,10 +436,20 @@ class SmartUpsEngine {
     // Add newly paired device
     addPairedDevice(deviceConfig) {
         if (deviceConfig.type === 'switch') {
+            this.ensureSectionLabels();
+            const section = deviceConfig.section ? parseInt(deviceConfig.section) : 1;
+            const sectionLabel = deviceConfig.sectionLabel || this.data.sectionLabels[section] || `Section ${section}`;
+            
+            if (deviceConfig.sectionLabel && deviceConfig.sectionLabel.trim()) {
+                this.data.sectionLabels[section] = deviceConfig.sectionLabel.trim();
+            }
+
             const newSwitch = {
                 id: "sw_" + Date.now().toString(36),
                 name: deviceConfig.name || "Smart Switch Pro",
                 room: deviceConfig.room || "Main Hub",
+                section: section,
+                sectionLabel: sectionLabel,
                 icon: "toggle-right",
                 state: deviceConfig.initialState !== false,
                 locked: false,
@@ -437,7 +460,7 @@ class SmartUpsEngine {
                 isNewlyPaired: true
             };
             this.data.switches.unshift(newSwitch);
-            this.logEvent("success", `Newly paired device [${newSwitch.name}] enrolled in ${newSwitch.room}.`);
+            this.logEvent("success", `Newly paired switch [${newSwitch.name}] enrolled in Section ${section} (${sectionLabel}).`);
         } else if (deviceConfig.type === 'outlet') {
             const newOutlet = {
                 id: "sock_" + Date.now().toString(36),
@@ -479,6 +502,25 @@ class SmartUpsEngine {
         saveSystemData(this.data);
         this.notifyUpdate();
         return { success: true };
+    }
+
+    // Update section label
+    updateSectionLabel(sectionNumber, newLabel) {
+        this.ensureSectionLabels();
+        const sec = parseInt(sectionNumber) || 1;
+        const clean = (newLabel || '').trim() || `Section ${sec}`;
+        this.data.sectionLabels[sec] = clean;
+        if (this.data.switches) {
+            this.data.switches.forEach(sw => {
+                if ((sw.section ? parseInt(sw.section) : 1) === sec) {
+                    sw.sectionLabel = clean;
+                }
+            });
+        }
+        this.logEvent("info", `Section ${sec} renamed to "${clean}".`);
+        saveSystemData(this.data);
+        this.notifyUpdate();
+        return { success: true, label: clean };
     }
 
     // Add log entry

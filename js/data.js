@@ -130,6 +130,12 @@ const DEFAULT_SYSTEM_DATA = {
     },
     switches: [],
     outlets: [],
+    sectionLabels: {
+        1: "Main Server & Core",
+        2: "Workstations & Lab",
+        3: "Lighting & Climate",
+        4: "Auxiliary & General"
+    },
     pairingCatalog: PAIRING_CATALOG,
     logs: [
         {
@@ -170,6 +176,8 @@ const ADMIN_SYSTEM_DATA = {
             id: "sw_1",
             name: "Main Server Rack Breaker",
             room: "Server Room",
+            section: 1,
+            sectionLabel: "Main Server & Core",
             icon: "server",
             state: true, // ON
             locked: true, // Protected against accidental toggling
@@ -182,6 +190,8 @@ const ADMIN_SYSTEM_DATA = {
             id: "sw_2",
             name: "Network & Security Hub",
             room: "Telecom Closet",
+            section: 1,
+            sectionLabel: "Main Server & Core",
             icon: "shield-check",
             state: true,
             locked: false,
@@ -194,6 +204,8 @@ const ADMIN_SYSTEM_DATA = {
             id: "sw_3",
             name: "Workstation Bench Power",
             room: "Control Lab",
+            section: 2,
+            sectionLabel: "Workstations & Lab",
             icon: "cpu",
             state: true,
             locked: false,
@@ -206,6 +218,8 @@ const ADMIN_SYSTEM_DATA = {
             id: "sw_4",
             name: "Lab HVAC Climate Fan",
             room: "Control Lab",
+            section: 3,
+            sectionLabel: "Lighting & Climate",
             icon: "fan",
             state: false,
             locked: false,
@@ -219,6 +233,8 @@ const ADMIN_SYSTEM_DATA = {
             id: "sw_5",
             name: "Perimeter Lighting & CCTV",
             room: "Exterior",
+            section: 4,
+            sectionLabel: "Auxiliary & General",
             icon: "lightbulb",
             state: true,
             locked: false,
@@ -302,6 +318,13 @@ const ADMIN_SYSTEM_DATA = {
             schedule: "Manual only"
         }
     ],
+
+    sectionLabels: {
+        1: "Main Server & Core",
+        2: "Workstations & Lab",
+        3: "Lighting & Climate",
+        4: "Auxiliary & General"
+    },
 
     // Available devices that can be discovered in the pairing wizard demo
     pairingCatalog: PAIRING_CATALOG,

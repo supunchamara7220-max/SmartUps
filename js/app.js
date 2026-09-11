@@ -496,47 +496,92 @@ function updatePowerFlowDiagram(isBlackout, battLevel, totalWatts) {
 // -------------------------------------------------------------
 // Render Smart Switches
 // -------------------------------------------------------------
+// Render Smart Switches (Divided into Sections 1, 2, 3, 4)
+// -------------------------------------------------------------
+const SECTION_THEMES = {
+    1: {
+        badge: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30',
+        addBorder: 'hover:border-cyan-500/60',
+        addText: 'group-hover:text-cyan-300',
+        addBg: 'group-hover:bg-cyan-500/20',
+        btnBorder: 'hover:border-cyan-500/50 hover:text-cyan-300'
+    },
+    2: {
+        badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+        addBorder: 'hover:border-emerald-500/60',
+        addText: 'group-hover:text-emerald-300',
+        addBg: 'group-hover:bg-emerald-500/20',
+        btnBorder: 'hover:border-emerald-500/50 hover:text-emerald-300'
+    },
+    3: {
+        badge: 'bg-purple-500/10 text-purple-400 border-purple-500/30',
+        addBorder: 'hover:border-purple-500/60',
+        addText: 'group-hover:text-purple-300',
+        addBg: 'group-hover:bg-purple-500/20',
+        btnBorder: 'hover:border-purple-500/50 hover:text-purple-300'
+    },
+    4: {
+        badge: 'bg-amber-500/10 text-amber-400 border-amber-500/30',
+        addBorder: 'hover:border-amber-500/60',
+        addText: 'group-hover:text-amber-300',
+        addBg: 'group-hover:bg-amber-500/20',
+        btnBorder: 'hover:border-amber-500/50 hover:text-amber-300'
+    }
+};
+
 function renderSwitchesList(switches) {
     const container = document.getElementById('switchesListContainer');
     if (!container) return;
 
-    if (!switches || switches.length === 0) {
-        if (container.querySelector('.btn-pair-switch-empty')) {
-            return; // Already rendered: prevent DOM recreation and pulsing
-        }
-        container.innerHTML = `
-            <div class="col-span-full py-10 px-6 rounded-2xl border border-dashed border-cyan-500/30 bg-slate-950/40 text-center space-y-3">
-                <div class="w-14 h-14 mx-auto rounded-2xl bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center text-2xl text-cyan-400">⚡</div>
-                <div>
-                    <h4 class="text-sm font-bold text-white tracking-wide">No Smart Switches Paired</h4>
-                    <p class="text-xs text-slate-400 max-w-md mx-auto mt-1">Your account starts with a clean power topology. You have full freedom to enroll switches, breakers, and high-load relays as you wish!</p>
-                </div>
-                <button type="button" class="btn-pair-switch-empty px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-bold text-xs shadow-lg shadow-cyan-500/20 transition-all cursor-pointer">
-                    ＋ Pair Your First Smart Switch
-                </button>
-            </div>
-        `;
-        container.querySelector('.btn-pair-switch-empty')?.addEventListener('click', () => {
-            window.smartUpsPairing.openForType('switch');
-        });
-        return;
-    }
+    const sectionLabels = window.smartUpsEngine?.data?.sectionLabels || {
+        1: "Main Server & Core",
+        2: "Workstations & Lab",
+        3: "Lighting & Climate",
+        4: "Auxiliary & General"
+    };
 
-    // Check if user has filter active
     const activeFilter = document.querySelector('.btn-switch-filter.active')?.dataset.filter || 'all';
 
-    const filtered = switches.filter(sw => {
-        if (activeFilter === 'all') return true;
-        if (activeFilter === 'on') return sw.state;
-        if (activeFilter === 'off') return !sw.state;
-        return true;
+    // Signature checking to prevent unnecessary DOM thrashing and pulsing on ticks
+    const renderSignature = JSON.stringify({
+        switches: (switches || []).map(s => ({
+            id: s.id,
+            state: s.state,
+            locked: s.locked,
+            name: s.name,
+            load: s.currentLoadWatts,
+            section: s.section,
+            priority: s.priority
+        })),
+        labels: sectionLabels,
+        filter: activeFilter,
+        role: window.smartUpsAuth?.currentUser?.role
     });
 
-    container.innerHTML = filtered.map(sw => {
-        const canToggle = window.smartUpsAuth.canToggle();
-        const isAdmin = window.smartUpsAuth.isAdmin();
+    if (container.dataset.lastSignature === renderSignature) {
+        return; // UI state is identical, skip DOM rebuild
+    }
+    container.dataset.lastSignature = renderSignature;
 
-        return `
+    const canToggle = window.smartUpsAuth.canToggle();
+    const isAdmin = window.smartUpsAuth.isAdmin();
+
+    const sectionsHtml = [1, 2, 3, 4].map(sec => {
+        const theme = SECTION_THEMES[sec] || SECTION_THEMES[1];
+        const label = sectionLabels[sec] || `Section ${sec}`;
+
+        const allSecSwitches = (switches || []).filter(sw => (sw.section || 1) === sec);
+        const filteredSecSwitches = allSecSwitches.filter(sw => {
+            if (activeFilter === 'all') return true;
+            if (activeFilter === 'on') return sw.state;
+            if (activeFilter === 'off') return !sw.state;
+            return true;
+        });
+
+        const activeCount = allSecSwitches.filter(sw => sw.state).length;
+        const totalWatts = allSecSwitches.reduce((acc, sw) => acc + (sw.state ? (sw.currentLoadWatts || 0) : 0), 0);
+
+        const switchCardsHtml = filteredSecSwitches.map(sw => `
             <div class="p-4 rounded-2xl border transition-all duration-300 relative group overflow-hidden ${
                 sw.state
                     ? 'bg-gray-800/80 border-cyan-500/40 shadow-lg shadow-cyan-950/20'
@@ -554,7 +599,7 @@ function renderSwitchesList(switches) {
                         <div>
                             <h4 class="font-bold text-white text-sm tracking-wide">${sw.name}</h4>
                             <div class="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
-                                <span class="text-gray-400 font-mono">${sw.room}</span>
+                                <span class="text-gray-400 font-mono">${sw.room || 'Breaker Panel'}</span>
                                 <span>•</span>
                                 <span class="px-1.5 py-0.2 rounded text-[10px] uppercase font-mono ${
                                     sw.priority === 'critical' ? 'bg-purple-900/40 text-purple-300 border border-purple-500/30' :
@@ -589,7 +634,7 @@ function renderSwitchesList(switches) {
                         <span class="font-mono font-bold ${sw.state ? 'text-cyan-300' : 'text-gray-500'} ml-1">
                             ${sw.state ? sw.currentLoadWatts : 0} W
                         </span>
-                        <span class="text-gray-500 text-[11px] ml-1">(${sw.ratedAmps}A rated)</span>
+                        <span class="text-gray-500 text-[11px] ml-1">(${sw.ratedAmps || 16}A rated)</span>
                     </div>
 
                     <!-- Modern Toggle Switch Button -->
@@ -603,8 +648,66 @@ function renderSwitchesList(switches) {
                     </button>
                 </div>
             </div>
+        `).join('');
+
+        // Dedicated "+ Add Switch" card button inside the section grid after switches
+        const addCardHtml = `
+            <div class="btn-add-switch-sec p-4 rounded-2xl border border-dashed border-slate-700/80 ${theme.addBorder} bg-slate-950/40 hover:bg-slate-900/50 transition-all flex flex-col items-center justify-center text-center cursor-pointer min-h-[140px] group" data-section="${sec}">
+                <div class="w-10 h-10 rounded-xl bg-slate-800/80 ${theme.addBg} border border-slate-700/60 flex items-center justify-center text-slate-400 ${theme.addText} transition-all text-xl font-bold mb-2">
+                    ＋
+                </div>
+                <span class="text-xs font-bold text-slate-200 ${theme.addText} transition-colors">Add Switch to Sec ${sec}</span>
+                <span class="text-[10px] text-slate-500 mt-0.5">Pair breaker or relay</span>
+            </div>
+        `;
+
+        return `
+            <div class="section-card p-4 sm:p-5 rounded-2xl bg-slate-900/40 border border-slate-800/80 space-y-4">
+                <!-- Section Header with Badge, Name, Rename Button, and Add Button -->
+                <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-800/60">
+                    <div class="flex flex-wrap items-center gap-2.5">
+                        <span class="px-2.5 py-0.5 rounded-md text-[11px] font-mono font-bold tracking-wider border ${theme.badge}">
+                            SECTION ${sec}
+                        </span>
+                        <h3 class="text-sm font-bold text-white tracking-wide flex items-center gap-1.5">
+                            <span class="section-label-text-${sec}">${label}</span>
+                        </h3>
+                        <button type="button" class="btn-rename-section p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white text-xs transition-colors cursor-pointer" data-section="${sec}" title="Rename Section ${sec} Label">
+                            ✏️
+                        </button>
+                        <span class="text-xs text-slate-400 font-mono">
+                            (${allSecSwitches.length} device${allSecSwitches.length === 1 ? '' : 's'} • <span class="text-cyan-400 font-semibold">${totalWatts} W</span>)
+                        </span>
+                    </div>
+
+                    <button type="button" class="btn-add-switch-sec px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 ${theme.btnBorder} text-slate-300 font-semibold text-xs transition-all cursor-pointer flex items-center gap-1.5 shadow-sm" data-section="${sec}">
+                        <span>＋</span>
+                        <span>Add to Sec ${sec}</span>
+                    </button>
+                </div>
+
+                <!-- Section Switches Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    ${allSecSwitches.length > 0
+                        ? switchCardsHtml + addCardHtml
+                        : `
+                        <div class="col-span-full py-4 px-5 rounded-xl border border-dashed border-slate-800/90 bg-slate-950/20 flex flex-wrap items-center justify-between gap-3 text-xs">
+                            <div class="flex items-center gap-2.5 text-slate-400">
+                                <span class="text-slate-600 text-sm">⚡</span>
+                                <span>No switches assigned to <strong class="text-slate-300 font-semibold">${label}</strong> yet.</span>
+                            </div>
+                            <button type="button" class="btn-add-switch-sec px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 ${theme.btnBorder} text-slate-300 font-semibold text-xs transition-all cursor-pointer flex items-center gap-1.5" data-section="${sec}">
+                                <span>＋</span>
+                                <span>Add Switch to Sec ${sec}</span>
+                            </button>
+                        </div>
+                    `}
+                </div>
+            </div>
         `;
     }).join('');
+
+    container.innerHTML = sectionsHtml;
 
     // Attach switch event listeners
     container.querySelectorAll('.btn-toggle-switch').forEach(btn => {
@@ -633,6 +736,29 @@ function renderSwitchesList(switches) {
             if (confirm("Remove this switch from your dashboard?")) {
                 window.smartUpsEngine.deleteDevice('switch', id);
                 window.showToast("Switch removed from dashboard.", "info");
+            }
+        });
+    });
+
+    // Attach Section Add Switch buttons
+    container.querySelectorAll('.btn-add-switch-sec').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const sec = parseInt(btn.dataset.section, 10) || 1;
+            if (window.smartUpsPairing) {
+                window.smartUpsPairing.openForType('switch', sec);
+            }
+        });
+    });
+
+    // Attach Section Rename buttons
+    container.querySelectorAll('.btn-rename-section').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const sec = parseInt(btn.dataset.section, 10) || 1;
+            const currentLabel = sectionLabels[sec] || `Section ${sec}`;
+            const newLabel = prompt(`Enter custom label for Section ${sec}:`, currentLabel);
+            if (newLabel !== null && newLabel.trim().length > 0) {
+                window.smartUpsEngine.updateSectionLabel(sec, newLabel.trim());
+                window.showToast(`Section ${sec} renamed to "${newLabel.trim()}"`, "success");
             }
         });
     });
