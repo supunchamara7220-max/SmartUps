@@ -672,7 +672,21 @@ function renderSwitchesList(switches) {
                 </div>
             </div>
         `;
-    }).join('');
+    }).join('') + `
+        <div class="btn-pair-more-switch p-5 rounded-2xl border border-dashed border-cyan-500/30 hover:border-cyan-400/80 bg-slate-950/40 hover:bg-slate-900/60 transition-all flex flex-col items-center justify-center text-center cursor-pointer min-h-[170px] group shadow-sm">
+            <div class="w-11 h-11 rounded-2xl bg-cyan-950/60 border border-cyan-500/30 group-hover:border-cyan-400 group-hover:bg-cyan-500/20 flex items-center justify-center text-xl text-cyan-400 transition-all mb-2 group-hover:scale-105">＋</div>
+            <h4 class="text-sm font-bold text-white group-hover:text-cyan-300 transition-colors">Add More Switches</h4>
+            <p class="text-[11px] text-slate-400 mt-0.5 max-w-[200px]">Pair another breaker or smart relay</p>
+            <button type="button" class="mt-3 px-3.5 py-1.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/40 text-xs font-bold text-cyan-300 group-hover:bg-cyan-500 group-hover:text-black transition-all cursor-pointer">＋ Add More</button>
+        </div>
+    `;
+
+    // Attach Add More Switch listener
+    container.querySelectorAll('.btn-pair-more-switch').forEach(btn => {
+        btn.addEventListener('click', () => {
+            window.smartUpsPairing.openForType('switch');
+        });
+    });
 
     // Attach switch event listeners
     container.querySelectorAll('.btn-toggle-switch').forEach(btn => {
@@ -799,6 +813,24 @@ function renderOutletsList(outlets) {
         return;
     }
 
+    // Signature checking to prevent unnecessary DOM thrashing on ticks
+    const renderSignature = JSON.stringify({
+        outlets: (outlets || []).map(s => ({
+            id: s.id,
+            state: s.state,
+            powerWatts: s.powerWatts,
+            currentAmps: s.currentAmps,
+            dailyKwh: s.dailyKwh,
+            timerMinutesRemaining: s.timerMinutesRemaining
+        })),
+        role: window.smartUpsAuth?.currentUser?.role
+    });
+
+    if (container.dataset.lastSignature === renderSignature) {
+        return; // UI state is identical, skip DOM rebuild
+    }
+    container.dataset.lastSignature = renderSignature;
+
     container.innerHTML = outlets.map(sock => {
         const canToggle = window.smartUpsAuth.canToggle();
 
@@ -880,7 +912,21 @@ function renderOutletsList(outlets) {
                 </div>
             </div>
         `;
-    }).join('');
+    }).join('') + `
+        <div class="btn-pair-more-outlet p-5 rounded-2xl border border-dashed border-emerald-500/30 hover:border-emerald-400/80 bg-slate-950/40 hover:bg-slate-900/60 transition-all flex flex-col items-center justify-center text-center cursor-pointer min-h-[170px] group shadow-sm">
+            <div class="w-11 h-11 rounded-2xl bg-emerald-950/60 border border-emerald-500/30 group-hover:border-emerald-400 group-hover:bg-emerald-500/20 flex items-center justify-center text-xl text-emerald-400 transition-all mb-2 group-hover:scale-105">＋</div>
+            <h4 class="text-sm font-bold text-white group-hover:text-emerald-300 transition-colors">Add More Outlets</h4>
+            <p class="text-[11px] text-slate-400 mt-0.5 max-w-[200px]">Pair another smart socket or plug</p>
+            <button type="button" class="mt-3 px-3.5 py-1.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/40 text-xs font-bold text-emerald-300 group-hover:bg-emerald-500 group-hover:text-black transition-all cursor-pointer">＋ Add More</button>
+        </div>
+    `;
+
+    // Attach Add More Outlet listener
+    container.querySelectorAll('.btn-pair-more-outlet').forEach(btn => {
+        btn.addEventListener('click', () => {
+            window.smartUpsPairing.openForType('outlet');
+        });
+    });
 
     // Attach socket event listeners
     container.querySelectorAll('.btn-toggle-outlet').forEach(btn => {
@@ -966,9 +1012,23 @@ function setupSimulatorControls() {
 }
 
 // -------------------------------------------------------------
-// Quick Actions (All On / All Off)
+// Quick Actions (All On / All Off & Add Devices)
 // -------------------------------------------------------------
 function setupQuickActions() {
+    const btnHeaderAddSwitch = document.getElementById('btnHeaderAddSwitch');
+    if (btnHeaderAddSwitch) {
+        btnHeaderAddSwitch.addEventListener('click', () => {
+            window.smartUpsPairing.openForType('switch');
+        });
+    }
+
+    const btnHeaderAddOutlet = document.getElementById('btnHeaderAddOutlet');
+    if (btnHeaderAddOutlet) {
+        btnHeaderAddOutlet.addEventListener('click', () => {
+            window.smartUpsPairing.openForType('outlet');
+        });
+    }
+
     const btnAllSwitchesOn = document.getElementById('btnAllSwitchesOn');
     const btnAllSwitchesOff = document.getElementById('btnAllSwitchesOff');
 
