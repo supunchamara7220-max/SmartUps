@@ -132,7 +132,6 @@ function setupAuthListeners() {
     const tabGateRegister = document.getElementById('tabGateRegister');
     const formGateLogin = document.getElementById('gateLoginForm');
     const formGateRegister = document.getElementById('gateRegisterForm');
-    const boxGateDemoCreds = document.getElementById('gateDemoCredsBox');
 
     if (tabGateLogin && tabGateRegister) {
         tabGateLogin.addEventListener('click', () => {
@@ -142,7 +141,6 @@ function setupAuthListeners() {
             tabGateRegister.classList.add('text-slate-400', 'border-transparent');
             formGateLogin.classList.remove('hidden');
             formGateRegister.classList.add('hidden');
-            if (boxGateDemoCreds) boxGateDemoCreds.classList.remove('hidden');
         });
 
         tabGateRegister.addEventListener('click', () => {
@@ -152,7 +150,6 @@ function setupAuthListeners() {
             tabGateLogin.classList.add('text-slate-400', 'border-transparent');
             formGateRegister.classList.remove('hidden');
             formGateLogin.classList.add('hidden');
-            if (boxGateDemoCreds) boxGateDemoCreds.classList.add('hidden');
         });
     }
 
@@ -170,27 +167,6 @@ function setupAuthListeners() {
                 input.type = 'password';
                 btn.textContent = '👁️';
                 btn.title = 'Show Password';
-            }
-        });
-    });
-
-    // Quick Fill Demo Credentials
-    document.querySelectorAll('.btn-fill-cred').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const email = btn.dataset.email;
-            const pass = btn.dataset.pass;
-            const gateEmail = document.getElementById('gateLoginEmail');
-            const gatePass = document.getElementById('gateLoginPassword');
-            if (gateEmail && gatePass) {
-                gateEmail.value = email;
-                gatePass.value = pass;
-                window.showToast(`Filled: ${email} (pass: ${pass})`, "info");
-            }
-            const loginEmail = document.getElementById('loginEmail');
-            const loginPass = document.getElementById('loginPassword');
-            if (loginEmail && loginPass) {
-                loginEmail.value = email;
-                loginPass.value = pass;
             }
         });
     });
