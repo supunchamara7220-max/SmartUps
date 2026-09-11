@@ -47,6 +47,29 @@ class PairingManager {
             });
         });
 
+        // Step 2 Rescan and Back buttons
+        const radarScanBtn = document.getElementById('btnRadarScan');
+        if (radarScanBtn) {
+            radarScanBtn.addEventListener('click', () => {
+                this.startDiscoveryScan();
+            });
+        }
+
+        const rescanListBtn = document.getElementById('btnPairRescan');
+        if (rescanListBtn) {
+            rescanListBtn.addEventListener('click', () => {
+                this.startDiscoveryScan();
+            });
+        }
+
+        const backStep1Btn = document.getElementById('btnPairBackStep1');
+        if (backStep1Btn) {
+            backStep1Btn.addEventListener('click', () => {
+                if (this.scanTimer) clearTimeout(this.scanTimer);
+                this.renderStep(1);
+            });
+        }
+
         // Step 4 Form submit
         const configForm = document.getElementById('pairingConfigForm');
         if (configForm) {
@@ -125,6 +148,11 @@ class PairingManager {
     }
 
     startDiscoveryScan() {
+        if (this.scanTimer) {
+            clearTimeout(this.scanTimer);
+            this.scanTimer = null;
+        }
+
         this.isScanning = true;
         this.discoveredDevices = [];
         const resultsContainer = document.getElementById('discoveredDevicesList');
@@ -132,43 +160,70 @@ class PairingManager {
         const radarElement = document.getElementById('radarSweeper');
 
         if (resultsContainer) {
-            resultsContainer.innerHTML = '';
+            resultsContainer.innerHTML = `
+                <div id="scanStatusPlaceholder" class="p-8 rounded-2xl border border-dashed border-cyan-500/30 bg-slate-950/40 text-center space-y-3">
+                    <div class="w-12 h-12 mx-auto rounded-2xl bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
+                        <span class="inline-block w-6 h-6 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin"></span>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-bold text-white tracking-wider uppercase font-mono">Radar Frequency Sweep Active</h4>
+                        <p class="text-[11px] text-slate-400 font-mono mt-1">Listening for BLE advertisements and 802.15.4 mesh packets...</p>
+                    </div>
+                </div>
+            `;
         }
         if (scanningText) {
-            scanningText.textContent = "Sweeping Bluetooth LE & 2.4GHz SmartUps Mesh for uncommissioned nodes...";
+            scanningText.innerHTML = `<span class="text-cyan-400 font-mono">Sweeping Bluetooth LE & 2.4GHz SmartUps Mesh for uncommissioned nodes...</span>`;
         }
         if (radarElement) {
             radarElement.classList.add('animate-radar-sweep');
         }
 
-        // Available devices matching or all
-        const catalog = DEFAULT_SYSTEM_DATA.pairingCatalog.filter(d =>
+        // Safely retrieve hardware catalog
+        const sourceCatalog = window.PAIRING_CATALOG || (typeof PAIRING_CATALOG !== 'undefined' ? PAIRING_CATALOG : (DEFAULT_SYSTEM_DATA && DEFAULT_SYSTEM_DATA.pairingCatalog) || []);
+        let catalog = sourceCatalog.filter(d =>
             !this.selectedDeviceType || this.selectedDeviceType === 'all' || d.type === this.selectedDeviceType
         );
+        if (!catalog || catalog.length === 0) {
+            catalog = sourceCatalog; // safe fallback
+        }
 
         let discoveredIndex = 0;
 
         const discoverNext = () => {
-            if (discoveredIndex < catalog.length && this.currentStep === 2) {
+            if (this.currentStep !== 2) return;
+
+            // Remove loading placeholder before injecting first device
+            const placeholder = document.getElementById('scanStatusPlaceholder');
+            if (placeholder) {
+                placeholder.remove();
+            }
+
+            if (discoveredIndex < catalog.length) {
                 const item = catalog[discoveredIndex];
                 this.discoveredDevices.push(item);
                 this.renderDiscoveredItem(item);
                 if (window.smartUpsEngine) {
-                    window.smartUpsEngine.playBeep(1200, 0.05);
+                    window.smartUpsEngine.playBeep(1200, 0.06);
                 }
                 discoveredIndex++;
 
                 if (discoveredIndex < catalog.length) {
-                    this.scanTimer = setTimeout(discoverNext, 1200 + Math.random() * 800);
-                } else {
                     if (scanningText) {
-                        scanningText.textContent = `Scan Complete: Found ${catalog.length} available device(s) ready to pair.`;
+                        scanningText.innerHTML = `<span class="text-cyan-300 font-semibold font-mono">Node Discovered!</span> <span class="text-slate-400 font-mono">Sweeping for additional hardware...</span>`;
+                    }
+                    // Discover next node approximately 1 second after
+                    this.scanTimer = setTimeout(discoverNext, 1000);
+                } else {
+                    this.isScanning = false;
+                    if (scanningText) {
+                        scanningText.innerHTML = `<span class="text-emerald-400 font-bold font-mono">✓ Scan Complete:</span> <span class="text-slate-300 font-mono">Found ${catalog.length} available device(s) ready to pair.</span>`;
                     }
                 }
             }
         };
 
-        // Trigger first detection after 1 second
+        // User requested: trigger demo discovery 1 second (1000ms) after scanning starts
         this.scanTimer = setTimeout(discoverNext, 1000);
     }
 
@@ -177,27 +232,31 @@ class PairingManager {
         if (!list) return;
 
         const card = document.createElement('div');
-        card.className = "p-4 rounded-xl bg-gray-800/80 border border-cyan-500/40 hover:border-cyan-400 transition-all duration-300 flex items-center justify-between gap-4 animate-fade-in shadow-lg shadow-cyan-950/30";
+        card.className = "p-4 rounded-xl bg-slate-900/90 border border-cyan-500/40 hover:border-cyan-400 transition-all duration-300 flex items-center justify-between gap-4 shadow-lg shadow-cyan-950/30";
 
         // Signal strength bars
-        const signalLevel = device.rssi > -50 ? 4 : (device.rssi > -65 ? 3 : 2);
+        const signalLevel = device.rssi > -45 ? 4 : (device.rssi > -55 ? 3 : 2);
         let signalBars = '';
         for (let i = 1; i <= 4; i++) {
             const active = i <= signalLevel;
-            signalBars += `<span class="inline-block w-1.5 h-${i * 1.5 + 1} rounded-t ${active ? 'bg-emerald-400' : 'bg-gray-700'}"></span>`;
+            const barHeight = i * 4 + 2;
+            signalBars += `<span class="inline-block w-1.5 rounded-t ${active ? 'bg-emerald-400' : 'bg-slate-700'}" style="height: ${barHeight}px;"></span>`;
         }
+
+        const typeIcon = device.type === 'switch' ? '⚡' : (device.type === 'battery' ? '🔋' : '🔌');
+        const typeBg = device.type === 'switch' ? 'border-cyan-500/30 bg-cyan-950/60 text-cyan-400' : (device.type === 'battery' ? 'border-purple-500/30 bg-purple-950/60 text-purple-400' : 'border-emerald-500/30 bg-emerald-950/60 text-emerald-400');
 
         card.innerHTML = `
             <div class="flex items-center gap-3">
-                <div class="w-12 h-12 rounded-xl bg-cyan-950/60 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xl font-bold">
-                    ${device.type === 'switch' ? '⚡' : (device.type === 'battery' ? '🔋' : '🔌')}
+                <div class="w-11 h-11 rounded-xl ${typeBg} border flex items-center justify-center text-xl font-bold flex-shrink-0">
+                    ${typeIcon}
                 </div>
                 <div>
                     <div class="flex items-center gap-2">
-                        <span class="font-bold text-white text-base">${device.name}</span>
-                        <span class="text-xs px-2 py-0.5 rounded-full bg-cyan-900/60 text-cyan-300 border border-cyan-500/30 font-mono">${device.model}</span>
+                        <span class="font-bold text-white text-sm">${device.name}</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-cyan-300 border border-slate-700 font-mono">${device.model}</span>
                     </div>
-                    <div class="text-xs text-gray-400 flex items-center gap-3 mt-1 font-mono">
+                    <div class="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5 font-mono">
                         <span>MAC: ${device.mac}</span>
                         <span>•</span>
                         <span class="text-emerald-400">${device.protocol}</span>
@@ -205,18 +264,18 @@ class PairingManager {
                 </div>
             </div>
 
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
                 <div class="text-right hidden sm:block">
-                    <div class="text-xs text-gray-400 flex items-center gap-1.5 justify-end">
-                        <span>Signal: ${device.rssi} dBm</span>
+                    <div class="text-[11px] text-slate-400 flex items-center gap-1.5 justify-end font-mono">
+                        <span>${device.rssi} dBm</span>
                         <div class="flex items-end gap-0.5 h-4">
                             ${signalBars}
                         </div>
                     </div>
-                    <div class="text-[11px] text-gray-500">Firmware ${device.firmware}</div>
+                    <div class="text-[10px] text-slate-500 font-mono">${device.ratedAmps ? device.ratedAmps + 'A Rated' : 'Modular LiFePO4'}</div>
                 </div>
 
-                <button class="btn-pair-target px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-semibold text-sm transition-all shadow-md shadow-cyan-500/20 active:scale-95 cursor-pointer">
+                <button type="button" class="btn-pair-target px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-bold text-xs transition-all shadow-md shadow-cyan-500/20 active:scale-95 cursor-pointer whitespace-nowrap">
                     Pair Device →
                 </button>
             </div>

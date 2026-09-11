@@ -6,6 +6,105 @@
 const STORAGE_KEY = 'smartups_system_state_v1';
 const AUTH_STORAGE_KEY = 'smartups_auth_user_v1';
 
+// Standalone Global Hardware Catalog available for discovery in pairing wizard
+const PAIRING_CATALOG = [
+    {
+        id: "pair_device_1",
+        type: "switch",
+        name: "Smart Breaker Gen4 Pro",
+        model: "SW-PRO-16A",
+        mac: "3C:71:BF:84:A2:91",
+        rssi: -42, // Strongest dBm
+        protocol: "Wi-Fi 6 + BLE 5.3",
+        firmware: "v2.1.0",
+        ratedAmps: 16,
+        icon: "toggle-right",
+        description: "High-capacity smart relay breaker with hardware overload surge cutoff."
+    },
+    {
+        id: "pair_device_2",
+        type: "switch",
+        name: "Industrial Circuit Breaker",
+        model: "CB-IND-32A",
+        mac: "44:17:93:D8:10:C3",
+        rssi: -52,
+        protocol: "Zigbee 3.0 / Matter",
+        firmware: "v2.4.2",
+        ratedAmps: 32,
+        icon: "toggle-right",
+        description: "Heavy-duty 32A DIN-rail breaker for HVAC, server racks and workshop machines."
+    },
+    {
+        id: "pair_device_3",
+        type: "outlet",
+        name: "Dual Managed Smart Socket",
+        model: "SOCK-DUO-230V",
+        mac: "A4:C1:38:19:D5:4B",
+        rssi: -48,
+        protocol: "Zigbee 3.0 / Matter",
+        firmware: "v3.0.4",
+        ratedAmps: 13,
+        icon: "plug",
+        description: "Dual managed AC socket with per-port power metering & auto load-shedding."
+    },
+    {
+        id: "pair_device_4",
+        type: "outlet",
+        name: "Smart Power Monitor Plug",
+        model: "PLUG-MON-10A",
+        mac: "58:8E:81:42:11:FE",
+        rssi: -62,
+        protocol: "Wi-Fi 2.4GHz",
+        firmware: "v1.8.2",
+        ratedAmps: 10,
+        icon: "zap",
+        description: "Ultra-compact inline smart plug with instant wattage display and power factor telemetry."
+    },
+    {
+        id: "pair_device_5",
+        type: "outlet",
+        name: "Appliance Heavy Socket 16A",
+        model: "SOCK-HVY-16A",
+        mac: "90:35:6E:12:87:B0",
+        rssi: -55,
+        protocol: "Matter over Thread",
+        firmware: "v1.9.0",
+        ratedAmps: 16,
+        icon: "plug",
+        description: "Reinforced high-load outlet with thermal runaway sensor and current limiting."
+    },
+    {
+        id: "pair_device_6",
+        type: "battery",
+        name: "SmartUps Modular Battery Pack",
+        model: "BATT-EXT-48V-50AH",
+        mac: "70:B3:D5:99:43:08",
+        rssi: -38, // Strongest
+        protocol: "CAN-Bus / BLE Bridge",
+        firmware: "v1.4.0",
+        ratedAmps: 60,
+        icon: "layers",
+        description: "2400Wh modular LiFePO4 battery pack to double backup runtime."
+    },
+    {
+        id: "pair_device_7",
+        type: "battery",
+        name: "RackMount LiFePO4 Bank 5kWh",
+        model: "BATT-RACK-48V-100AH",
+        mac: "88:E2:0F:7A:B1:39",
+        rssi: -45,
+        protocol: "CAN-Bus / Modbus RS485",
+        firmware: "v2.0.1",
+        ratedAmps: 100,
+        icon: "layers",
+        description: "5120Wh high-density server rack battery module for extended mission-critical operations."
+    }
+];
+
+if (typeof window !== 'undefined') {
+    window.PAIRING_CATALOG = PAIRING_CATALOG;
+}
+
 // Default system dataset (Clean slate for all newly created accounts and users: 0 devices, 0 load)
 const DEFAULT_SYSTEM_DATA = {
     // UPS Core System Stats
@@ -31,6 +130,7 @@ const DEFAULT_SYSTEM_DATA = {
     },
     switches: [],
     outlets: [],
+    pairingCatalog: PAIRING_CATALOG,
     logs: [
         {
             id: Date.now(),
@@ -204,60 +304,7 @@ const ADMIN_SYSTEM_DATA = {
     ],
 
     // Available devices that can be discovered in the pairing wizard demo
-    pairingCatalog: [
-        {
-            id: "pair_device_1",
-            type: "switch",
-            name: "Smart Switch Gen4",
-            model: "SW-PRO-16A",
-            mac: "3C:71:BF:84:A2:91",
-            rssi: -42, // Excellent dBm
-            protocol: "Wi-Fi 6 + BLE 5.3",
-            firmware: "v2.1.0",
-            ratedAmps: 16,
-            icon: "toggle-right",
-            description: "High-capacity smart relay breaker with hardware overload surge cutoff."
-        },
-        {
-            id: "pair_device_2",
-            type: "outlet",
-            name: "Dual Smart Socket Module",
-            model: "SOCK-DUO-230V",
-            mac: "A4:C1:38:19:D5:4B",
-            rssi: -58, // Good dBm
-            protocol: "Zigbee 3.0 / Matter",
-            firmware: "v3.0.4",
-            ratedAmps: 13,
-            icon: "plug",
-            description: "Dual managed AC socket with per-port power metering & auto load-shedding."
-        },
-        {
-            id: "pair_device_3",
-            type: "outlet",
-            name: "Smart Power Monitor Plug",
-            model: "PLUG-MON-10A",
-            mac: "58:8E:81:42:11:FE",
-            rssi: -65,
-            protocol: "Wi-Fi 2.4GHz",
-            firmware: "v1.8.2",
-            ratedAmps: 10,
-            icon: "zap",
-            description: "Ultra-compact inline smart plug with instant wattage display and power factor telemetry."
-        },
-        {
-            id: "pair_device_4",
-            type: "battery",
-            name: "SmartUps Expansion Battery Pack",
-            model: "BATT-EXT-48V-50AH",
-            mac: "70:B3:D5:99:43:08",
-            rssi: -38, // Strongest
-            protocol: "CAN-Bus / BLE Bridge",
-            firmware: "v1.4.0",
-            ratedAmps: 60,
-            icon: "layers",
-            description: "2400Wh modular LiFePO4 battery pack to double backup runtime."
-        }
-    ],
+    pairingCatalog: PAIRING_CATALOG,
 
     // Activity and system security logs
     logs: [

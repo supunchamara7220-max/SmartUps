@@ -595,20 +595,29 @@
                     <div class="flex items-center justify-between">
                         <div>
                             <h4 class="text-sm font-semibold text-slate-200">Discovery Radar Active</h4>
-                            <p id="scanStatusText" class="text-xs text-cyan-400 font-mono mt-0.5">Sweeping Bluetooth LE & 2.4GHz SmartUps Mesh...</p>
+                            <p id="scanStatusText" class="text-xs text-cyan-400 font-mono mt-0.5">Sweeping Bluetooth LE & 2.4GHz SmartUps Mesh for uncommissioned nodes...</p>
                         </div>
-                        <!-- Animated Radar Screen -->
-                        <div class="w-14 h-14 rounded-full border border-cyan-500/50 bg-slate-950 relative overflow-hidden flex items-center justify-center shadow-inner shadow-cyan-500/20">
+                        <!-- Animated Radar Screen / Click to Rescan -->
+                        <button type="button" id="btnRadarScan" class="w-14 h-14 rounded-full border border-cyan-500/50 hover:border-cyan-300 bg-slate-950 relative overflow-hidden flex items-center justify-center shadow-inner shadow-cyan-500/20 cursor-pointer group transition-all" title="Click to restart discovery scan">
                             <div class="absolute inset-2 rounded-full border border-cyan-500/20"></div>
                             <div class="absolute inset-4 rounded-full border border-cyan-500/30"></div>
                             <div id="radarSweeper" class="absolute inset-0 bg-gradient-to-tr from-cyan-500/40 to-transparent rounded-full animate-radar-sweep"></div>
-                            <span class="text-cyan-400 text-xs font-mono font-bold z-10">SCAN</span>
-                        </div>
+                            <span class="text-cyan-400 group-hover:text-cyan-200 text-xs font-mono font-bold z-10">SCAN</span>
+                        </button>
                     </div>
 
                     <!-- Discovered Devices List -->
                     <div id="discoveredDevicesList" class="space-y-3 max-h-64 overflow-y-auto pr-1">
                         <!-- Populated dynamically by pairing.js -->
+                    </div>
+
+                    <div class="pt-3 border-t border-slate-800 flex items-center justify-between text-xs">
+                        <button type="button" id="btnPairBackStep1" class="text-slate-400 hover:text-white transition-colors flex items-center gap-1 cursor-pointer">
+                            <span>←</span> Back to Device Types
+                        </button>
+                        <button type="button" id="btnPairRescan" class="text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1.5 cursor-pointer font-mono">
+                            <span>🔄</span> Re-scan Mesh
+                        </button>
                     </div>
                 </div>
 
@@ -781,11 +790,11 @@
     </div>
 
     <!-- Application Scripts with Cache-Busters -->
-    <script src="js/data.js?v=4.3.2"></script>
-    <script src="js/auth.js?v=4.3.2"></script>
-    <script src="js/ups.js?v=4.3.2"></script>
-    <script src="js/charts.js?v=4.3.2"></script>
-    <script src="js/pairing.js?v=4.3.2"></script>
-    <script src="js/app.js?v=4.3.2"></script>
+    <script src="js/data.js?v=4.3.3"></script>
+    <script src="js/auth.js?v=4.3.3"></script>
+    <script src="js/ups.js?v=4.3.3"></script>
+    <script src="js/charts.js?v=4.3.3"></script>
+    <script src="js/pairing.js?v=4.3.3"></script>
+    <script src="js/app.js?v=4.3.3"></script>
 </body>
 </html>
