@@ -231,7 +231,7 @@ const ADMIN_SYSTEM_DATA = {
             ratedAmps: 10,
             lastChanged: "2026-09-11 14:02",
             sections: [
-                { id: 1, label: "Main Intake Fan", state: false, watts: 0, defaultWatts: 350 }
+                { id: 1, label: "Default Section", state: false, watts: 0, defaultWatts: 350 }
             ]
         },
         {
@@ -487,7 +487,7 @@ function ensureSwitchSections(sw) {
         sw.sections = [
             {
                 id: 1,
-                label: `${sw.name || 'Circuit'} - Section 1`,
+                label: "Default Section",
                 state: sw.state !== undefined ? sw.state : true,
                 watts: sw.currentLoadWatts || 60
             }

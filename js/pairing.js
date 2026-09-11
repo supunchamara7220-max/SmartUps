@@ -81,7 +81,9 @@ class PairingManager {
 
         // Step 4 Section count buttons
         document.querySelectorAll('.btn-cfg-sec-count').forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 const count = parseInt(btn.dataset.count, 10) || 1;
                 this.setSectionCount(count);
             });
@@ -90,10 +92,12 @@ class PairingManager {
         // Step 4 Add Section button
         const addSecBtn = document.getElementById('btnCfgAddSection');
         if (addSecBtn) {
-            addSecBtn.addEventListener('click', () => {
-                const currentCount = document.querySelectorAll('.cfg-section-label-input').length;
-                if (currentCount < 4) {
-                    this.setSectionCount(currentCount + 1);
+            addSecBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const current = this.sectionCount || 1;
+                if (current < 4) {
+                    this.setSectionCount(current + 1);
                 } else {
                     window.showToast("Maximum 4 sections allowed per smart switch.", "info");
                 }
@@ -438,16 +442,14 @@ class PairingManager {
             existingValues[inp.dataset.secId] = inp.value;
         });
 
-        const defaultLabels = [
-            "Main Server & Core",
-            "Cooling & Climate Fan",
-            "Workstation & Bench",
-            "Auxiliary Breaker"
-        ];
-
         let html = '';
         for (let i = 1; i <= this.sectionCount; i++) {
-            const val = existingValues[i] || defaultLabels[i - 1] || `Circuit ${i}`;
+            // User requested: default 1 named "Default Section"
+            const defaultLabel = i === 1 ? "Default Section" : `Section ${i}`;
+            const val = (existingValues[i] !== undefined && existingValues[i].trim().length > 0)
+                ? existingValues[i]
+                : defaultLabel;
+
             html += `
                 <div class="flex items-center gap-2">
                     <span class="w-6 h-6 rounded-md bg-slate-900 border border-slate-700 text-cyan-400 font-mono text-xs flex items-center justify-center font-bold flex-shrink-0">${i}</span>
@@ -455,7 +457,7 @@ class PairingManager {
                            class="cfg-section-label-input flex-1 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-cyan-400 focus:outline-none" 
                            data-sec-id="${i}" 
                            value="${val}" 
-                           placeholder="Label for Section ${i} (e.g. Server, Lighting, Fan)">
+                           placeholder="Label for Section ${i}">
                 </div>
             `;
         }
@@ -498,7 +500,7 @@ class PairingManager {
         if (switchBox) {
             if (device && device.type === 'switch') {
                 switchBox.classList.remove('hidden');
-                this.setSectionCount(4); // Default to 4 sections
+                this.setSectionCount(1); // User request: default 1 named "Default Section"
             } else {
                 switchBox.classList.add('hidden');
             }

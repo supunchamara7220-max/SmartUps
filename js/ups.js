@@ -382,7 +382,7 @@ class SmartUpsEngine {
 
     // Add another section (channel) to a switch (up to 4)
     addSwitchSection(switchId, label) {
-        if (!window.smartUpsAuth.canConfigure()) {
+        if (window.smartUpsAuth && typeof window.smartUpsAuth.canConfigure === 'function' && !window.smartUpsAuth.canConfigure()) {
             return { success: false, message: "Permission Denied: Configuration role required." };
         }
 
@@ -398,7 +398,8 @@ class SmartUpsEngine {
         }
 
         const nextId = sw.sections.length + 1;
-        const secLabel = (label && label.trim()) || `Circuit ${nextId}`;
+        const defaultLabel = nextId === 1 ? "Default Section" : `Section ${nextId}`;
+        const secLabel = (label && label.trim()) || defaultLabel;
         const newSecWatts = Math.floor(Math.random() * 35 + 35);
 
         sw.sections.push({
@@ -550,7 +551,7 @@ class SmartUpsEngine {
             if (deviceConfig.sections && Array.isArray(deviceConfig.sections) && deviceConfig.sections.length > 0) {
                 sections = deviceConfig.sections.map((sec, idx) => ({
                     id: idx + 1,
-                    label: sec.label || `Circuit ${idx + 1}`,
+                    label: (sec.label && sec.label.trim()) || (idx === 0 ? "Default Section" : `Section ${idx + 1}`),
                     state: deviceConfig.initialState !== false,
                     watts: sec.watts || Math.floor(Math.random() * 35 + 35)
                 }));
@@ -559,7 +560,7 @@ class SmartUpsEngine {
                 for (let i = 1; i <= count; i++) {
                     sections.push({
                         id: i,
-                        label: `Circuit ${i}`,
+                        label: i === 1 ? "Default Section" : `Section ${i}`,
                         state: deviceConfig.initialState !== false,
                         watts: Math.floor(Math.random() * 35 + 35)
                     });

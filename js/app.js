@@ -557,7 +557,7 @@ function renderSwitchesList(switches) {
         const isAdmin = window.smartUpsAuth.isAdmin();
         const sections = sw.sections && Array.isArray(sw.sections) && sw.sections.length > 0
             ? sw.sections
-            : (typeof ensureSwitchSections === 'function' ? ensureSwitchSections(sw) : [{ id: 1, label: `${sw.name} - Circuit 1`, state: sw.state, watts: sw.currentLoadWatts }]);
+            : (typeof ensureSwitchSections === 'function' ? ensureSwitchSections(sw) : [{ id: 1, label: "Default Section", state: sw.state, watts: sw.currentLoadWatts }]);
 
         const activeSecCount = sections.filter(s => s.state).length;
 
@@ -721,15 +721,17 @@ function renderSwitchesList(switches) {
     // Attach Add Section Button (+) on Card
     container.querySelectorAll('.btn-add-switch-section').forEach(btn => {
         btn.addEventListener('click', (e) => {
+            e.preventDefault();
             e.stopPropagation();
             const swId = btn.dataset.switchId;
-            const sw = switches.find(s => s.id === swId);
+            const sw = (window.smartUpsEngine?.data?.switches || switches).find(s => s.id === swId);
             const nextId = (sw && sw.sections ? sw.sections.length : 0) + 1;
-            const label = prompt(`Enter custom label for Section ${nextId}:`, `Circuit ${nextId}`);
+            const defaultLabel = nextId === 1 ? "Default Section" : `Section ${nextId}`;
+            const label = prompt(`Enter label for Section ${nextId}:`, defaultLabel);
             if (label !== null && label.trim().length > 0) {
                 const res = window.smartUpsEngine.addSwitchSection(swId, label.trim());
                 if (res.success) {
-                    window.showToast(`Section ${nextId} ("${label.trim()}") added to ${sw.name}!`, "success");
+                    window.showToast(`Section ${nextId} ("${label.trim()}") added to ${sw ? sw.name : 'switch'}!`, "success");
                 } else {
                     window.showToast(res.message, "warning");
                 }

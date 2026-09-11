@@ -278,6 +278,11 @@ class AuthManager {
         return !!this.currentUser.canPair;
     }
 
+    canConfigure() {
+        if (!this.currentUser) return true;
+        return this.currentUser.canConfigure !== false;
+    }
+
     emitAuthChange() {
         window.dispatchEvent(new CustomEvent('smartups:auth-changed', {
             detail: { user: this.currentUser }
