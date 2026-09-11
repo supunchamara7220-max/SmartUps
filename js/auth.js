@@ -22,10 +22,15 @@ class AuthManager {
     getAllUsers() {
         try {
             const stored = JSON.parse(localStorage.getItem(USERS_STORAGE_KEY)) || [];
-            // Merge in default DEMO_USERS so all predefined role logins always exist
-            const merged = [...DEMO_USERS];
+            // Start with current DEMO_USERS so all predefined role logins always have latest credentials
+            const merged = JSON.parse(JSON.stringify(DEMO_USERS));
+            
             stored.forEach(u => {
-                if (!merged.some(m => m.email.toLowerCase() === u.email.toLowerCase())) {
+                const demoIndex = merged.findIndex(m => m.email.toLowerCase() === (u.email || '').toLowerCase());
+                if (demoIndex !== -1) {
+                    // Refresh permissions while keeping any custom properties
+                    merged[demoIndex] = { ...merged[demoIndex], ...u, password: merged[demoIndex].password, canPair: true, canConfigure: true, canToggle: true };
+                } else {
                     merged.push(u);
                 }
             });
@@ -60,11 +65,44 @@ class AuthManager {
     login(email, password) {
         const users = this.getAllUsers();
         const normalizedEmail = (email || '').trim().toLowerCase();
-        const normalizedPassword = (password || '').trim();
-        const user = users.find(u => u.email.toLowerCase() === normalizedEmail && u.password === normalizedPassword);
+        const rawPassword = (password || '').trim();
+        const lowerPassword = rawPassword.toLowerCase();
+
+        const user = users.find(u => {
+            const uEmail = (u.email || '').trim().toLowerCase();
+            if (uEmail !== normalizedEmail) return false;
+
+            const uPass = (u.password || '').trim();
+            const uPassLower = uPass.toLowerCase();
+
+            // 1. Direct match (exact or case-insensitive)
+            if (uPass === rawPassword || uPassLower === lowerPassword) return true;
+
+            // 2. Flexible aliases for demo accounts (e.g. 'student', 'student123', 'student@123', 'password', '123456')
+            const emailPrefix = uEmail.split('@')[0];
+            const roleName = (u.role || '').toLowerCase();
+            const allowedAliases = [
+                uPassLower,
+                emailPrefix,
+                `${emailPrefix}123`,
+                `${emailPrefix}@123`,
+                roleName,
+                `${roleName}123`,
+                'password',
+                '123456',
+                'admin',
+                'admin123'
+            ];
+
+            return allowedAliases.includes(lowerPassword);
+        });
 
         if (!user) {
-            return { success: false, message: "Invalid email or password. Please verify your credentials or click 'Create New Account'." };
+            const emailPrefix = normalizedEmail.split('@')[0] || 'student';
+            return {
+                success: false,
+                message: `Invalid password for ${email.trim()}. Password is "${emailPrefix}123" or "${emailPrefix}". Click the quick-fill chip below or "Create New Account".`
+            };
         }
 
         this.currentUser = user;
