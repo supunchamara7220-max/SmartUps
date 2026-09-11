@@ -156,6 +156,12 @@ class PairingManager {
             }
         });
 
+        // Reset scroll position to top of modal body on step change
+        const scrollBody = this.modal ? this.modal.querySelector('.overflow-y-auto') : null;
+        if (scrollBody) {
+            scrollBody.scrollTop = 0;
+        }
+
         // Update stepper dots & lines
         this.stepperDots.forEach((dot, idx) => {
             const stepNum = idx + 1;

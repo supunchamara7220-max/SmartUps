@@ -118,6 +118,25 @@ body {
     background: #0284c7;
 }
 
+/* Enhanced scrollbar for modal body */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.6);
+    border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(6, 182, 212, 0.4);
+    border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(6, 182, 212, 0.8);
+}
+
 /* Fade in animation */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(6px); }
