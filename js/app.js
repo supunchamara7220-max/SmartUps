@@ -525,6 +525,26 @@ function renderSwitchesList(switches) {
     // Check if user has filter active
     const activeFilter = document.querySelector('.btn-switch-filter.active')?.dataset.filter || 'all';
 
+    // Signature checking to prevent unnecessary DOM thrashing and pulsing on ticks
+    const renderSignature = JSON.stringify({
+        switches: (switches || []).map(s => ({
+            id: s.id,
+            state: s.state,
+            locked: s.locked,
+            name: s.name,
+            load: s.currentLoadWatts,
+            priority: s.priority,
+            sections: (s.sections || []).map(sec => ({ id: sec.id, state: sec.state, label: sec.label, watts: sec.watts }))
+        })),
+        filter: activeFilter,
+        role: window.smartUpsAuth?.currentUser?.role
+    });
+
+    if (container.dataset.lastSignature === renderSignature) {
+        return; // UI state is identical, skip DOM rebuild
+    }
+    container.dataset.lastSignature = renderSignature;
+
     const filtered = switches.filter(sw => {
         if (activeFilter === 'all') return true;
         if (activeFilter === 'on') return sw.state;
@@ -535,6 +555,11 @@ function renderSwitchesList(switches) {
     container.innerHTML = filtered.map(sw => {
         const canToggle = window.smartUpsAuth.canToggle();
         const isAdmin = window.smartUpsAuth.isAdmin();
+        const sections = sw.sections && Array.isArray(sw.sections) && sw.sections.length > 0
+            ? sw.sections
+            : (typeof ensureSwitchSections === 'function' ? ensureSwitchSections(sw) : [{ id: 1, label: `${sw.name} - Circuit 1`, state: sw.state, watts: sw.currentLoadWatts }]);
+
+        const activeSecCount = sections.filter(s => s.state).length;
 
         return `
             <div class="p-4 rounded-2xl border transition-all duration-300 relative group overflow-hidden ${
@@ -582,7 +607,7 @@ function renderSwitchesList(switches) {
                     </div>
                 </div>
 
-                <!-- Live Power & Status -->
+                <!-- Live Power & Master Status -->
                 <div class="flex items-center justify-between pt-3 border-t border-gray-700/50 text-xs">
                     <div>
                         <span class="text-gray-400">Load:</span>
@@ -601,6 +626,49 @@ function renderSwitchesList(switches) {
                         <span class="w-2 h-2 rounded-full ${sw.state ? 'bg-black animate-ping' : 'bg-gray-500'}"></span>
                         <span>${sw.state ? 'ACTIVE' : 'OFF'}</span>
                     </button>
+                </div>
+
+                <!-- Multi-Channel Sections / Gangs (1, 2, 3, 4) Under Card (Reference Drawing) -->
+                <div class="pt-3 mt-3 border-t border-slate-700/60 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] text-slate-400 font-mono uppercase tracking-wider mr-1">Sections:</span>
+                        ${sections.map(sec => `
+                            <button type="button" 
+                                    class="btn-toggle-sec w-7 h-7 rounded-lg font-mono text-xs font-bold transition-all flex items-center justify-center cursor-pointer border ${
+                                        sec.state
+                                            ? 'bg-cyan-500/25 border-cyan-400 text-cyan-300 shadow-sm shadow-cyan-500/30 ring-1 ring-cyan-400/40 hover:bg-cyan-500/35'
+                                            : 'bg-slate-900/90 border-slate-700 text-slate-500 hover:border-slate-600 hover:text-slate-300'
+                                    } ${!canToggle || (sw.locked && !isAdmin) ? 'opacity-50 cursor-not-allowed' : ''}"
+                                    data-switch-id="${sw.id}"
+                                    data-section-id="${sec.id}"
+                                    title="Section ${sec.id}: ${sec.label} (${sec.state ? (sec.watts || 0) + 'W • ON' : 'OFF'})">
+                                ${sec.id}
+                            </button>
+                        `).join('')}
+
+                        <!-- Add Section (+) button if fewer than 4 sections -->
+                        ${sections.length < 4 ? `
+                            <button type="button" 
+                                    class="btn-add-switch-section w-7 h-7 rounded-lg font-mono text-xs font-bold transition-all flex items-center justify-center cursor-pointer border border-dashed border-slate-700 hover:border-cyan-400 bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-cyan-300"
+                                    data-switch-id="${sw.id}"
+                                    title="Add Section ${sections.length + 1} with custom label">
+                                ＋
+                            </button>
+                        ` : ''}
+                    </div>
+
+                    <!-- Active Section Counter & Inline Rename -->
+                    <div class="flex items-center gap-1.5 text-[11px] text-slate-400">
+                        <span class="font-mono text-[10px] ${activeSecCount > 0 ? 'text-cyan-400 font-semibold' : 'text-slate-500'}">
+                            ${activeSecCount}/${sections.length} Active
+                        </span>
+                        <button type="button" 
+                                class="btn-rename-switch-sec p-1 rounded hover:bg-slate-800 text-slate-400 hover:text-cyan-300 text-xs transition-colors cursor-pointer" 
+                                data-switch-id="${sw.id}" 
+                                title="Rename section labels for this switch">
+                            ✏️
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
@@ -633,6 +701,68 @@ function renderSwitchesList(switches) {
             if (confirm("Remove this switch from your dashboard?")) {
                 window.smartUpsEngine.deleteDevice('switch', id);
                 window.showToast("Switch removed from dashboard.", "info");
+            }
+        });
+    });
+
+    // Attach Individual Sub-Channel Section Toggle
+    container.querySelectorAll('.btn-toggle-sec').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const swId = btn.dataset.switchId;
+            const secId = parseInt(btn.dataset.sectionId, 10);
+            const res = window.smartUpsEngine.toggleSwitchSection(swId, secId);
+            if (!res.success) {
+                window.showToast(res.message, "warning");
+            }
+        });
+    });
+
+    // Attach Add Section Button (+) on Card
+    container.querySelectorAll('.btn-add-switch-section').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const swId = btn.dataset.switchId;
+            const sw = switches.find(s => s.id === swId);
+            const nextId = (sw && sw.sections ? sw.sections.length : 0) + 1;
+            const label = prompt(`Enter custom label for Section ${nextId}:`, `Circuit ${nextId}`);
+            if (label !== null && label.trim().length > 0) {
+                const res = window.smartUpsEngine.addSwitchSection(swId, label.trim());
+                if (res.success) {
+                    window.showToast(`Section ${nextId} ("${label.trim()}") added to ${sw.name}!`, "success");
+                } else {
+                    window.showToast(res.message, "warning");
+                }
+            }
+        });
+    });
+
+    // Attach Rename Section Button (✏️) on Card
+    container.querySelectorAll('.btn-rename-switch-sec').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const swId = btn.dataset.switchId;
+            const sw = switches.find(s => s.id === swId);
+            if (!sw || !sw.sections || sw.sections.length === 0) return;
+
+            let secNum = 1;
+            if (sw.sections.length > 1) {
+                const optionsList = sw.sections.map(s => `${s.id}: ${s.label}`).join('\n');
+                const secNumStr = prompt(`Which section do you want to rename?\n${optionsList}\n\nEnter section number (1-${sw.sections.length}):`, "1");
+                if (!secNumStr) return;
+                secNum = parseInt(secNumStr, 10);
+            }
+
+            const targetSec = sw.sections.find(s => s.id === secNum);
+            if (!targetSec) {
+                window.showToast(`Section ${secNum} not found.`, "warning");
+                return;
+            }
+
+            const newLabel = prompt(`Enter new label for Section ${secNum}:`, targetSec.label);
+            if (newLabel !== null && newLabel.trim().length > 0) {
+                window.smartUpsEngine.renameSwitchSection(swId, secNum, newLabel.trim());
+                window.showToast(`Section ${secNum} renamed to "${newLabel.trim()}".`, "success");
             }
         });
     });

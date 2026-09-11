@@ -176,7 +176,13 @@ const ADMIN_SYSTEM_DATA = {
             priority: "critical", // "critical", "essential", "non-essential"
             currentLoadWatts: 480,
             ratedAmps: 16,
-            lastChanged: "2026-09-11 08:30"
+            lastChanged: "2026-09-11 08:30",
+            sections: [
+                { id: 1, label: "Blade Server Array", state: true, watts: 180 },
+                { id: 2, label: "SAN Storage Pool", state: true, watts: 140 },
+                { id: 3, label: "Core Switch & Fiber", state: true, watts: 85 },
+                { id: 4, label: "Ventilation Rack Fans", state: true, watts: 75 }
+            ]
         },
         {
             id: "sw_2",
@@ -188,7 +194,13 @@ const ADMIN_SYSTEM_DATA = {
             priority: "critical",
             currentLoadWatts: 95,
             ratedAmps: 10,
-            lastChanged: "2026-09-11 08:30"
+            lastChanged: "2026-09-11 08:30",
+            sections: [
+                { id: 1, label: "PoE Injector Bank", state: true, watts: 45 },
+                { id: 2, label: "CCTV NVR Vault", state: true, watts: 25 },
+                { id: 3, label: "Intrusion Alarm Panel", state: true, watts: 15 },
+                { id: 4, label: "Access Control Hub", state: true, watts: 10 }
+            ]
         },
         {
             id: "sw_3",
@@ -200,7 +212,11 @@ const ADMIN_SYSTEM_DATA = {
             priority: "essential",
             currentLoadWatts: 280,
             ratedAmps: 16,
-            lastChanged: "2026-09-11 11:15"
+            lastChanged: "2026-09-11 11:15",
+            sections: [
+                { id: 1, label: "Workstation Bench A", state: true, watts: 160 },
+                { id: 2, label: "Bench Test Instruments", state: true, watts: 120 }
+            ]
         },
         {
             id: "sw_4",
@@ -213,7 +229,10 @@ const ADMIN_SYSTEM_DATA = {
             currentLoadWatts: 0,
             maxWatts: 350,
             ratedAmps: 10,
-            lastChanged: "2026-09-11 14:02"
+            lastChanged: "2026-09-11 14:02",
+            sections: [
+                { id: 1, label: "Main Intake Fan", state: false, watts: 0, defaultWatts: 350 }
+            ]
         },
         {
             id: "sw_5",
@@ -225,7 +244,12 @@ const ADMIN_SYSTEM_DATA = {
             priority: "essential",
             currentLoadWatts: 140,
             ratedAmps: 10,
-            lastChanged: "2026-09-11 18:00"
+            lastChanged: "2026-09-11 18:00",
+            sections: [
+                { id: 1, label: "North Perimeter Flood", state: true, watts: 55 },
+                { id: 2, label: "South Perimeter Flood", state: true, watts: 55 },
+                { id: 3, label: "CCTV Pole Illuminator", state: true, watts: 30 }
+            ]
         }
     ],
 
@@ -455,3 +479,24 @@ function resetSystemData(user) {
     localStorage.removeItem(`${STORAGE_KEY}_${id}`);
     return getSystemData(activeUser);
 }
+
+// Ensure all switches have valid multi-channel sections array (1-4 channels)
+function ensureSwitchSections(sw) {
+    if (!sw) return [];
+    if (!sw.sections || !Array.isArray(sw.sections) || sw.sections.length === 0) {
+        sw.sections = [
+            {
+                id: 1,
+                label: `${sw.name || 'Circuit'} - Section 1`,
+                state: sw.state !== undefined ? sw.state : true,
+                watts: sw.currentLoadWatts || 60
+            }
+        ];
+    }
+    return sw.sections;
+}
+
+if (typeof window !== 'undefined') {
+    window.ensureSwitchSections = ensureSwitchSections;
+}
+

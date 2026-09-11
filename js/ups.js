@@ -6,6 +6,7 @@
 class SmartUpsEngine {
     constructor() {
         this.data = getSystemData();
+        this.ensureSwitchIntegrity();
         this.audioCtx = null;
         this.listeners = [];
         this.timerInterval = null;
@@ -16,8 +17,19 @@ class SmartUpsEngine {
         // Listen for user login/logout to switch user device storage immediately
         window.addEventListener('smartups:auth-changed', (e) => {
             this.data = getSystemData(e.detail ? e.detail.user : null);
+            this.ensureSwitchIntegrity();
             this.notifyUpdate();
         });
+    }
+
+    ensureSwitchIntegrity() {
+        if (this.data && this.data.switches && Array.isArray(this.data.switches)) {
+            this.data.switches.forEach(sw => {
+                if (typeof ensureSwitchSections === 'function') {
+                    ensureSwitchSections(sw);
+                }
+            });
+        }
     }
 
     // Web Audio API Relay & Alert Synthesizer (no external audio files needed)
@@ -287,7 +299,7 @@ class SmartUpsEngine {
         }
     }
 
-    // Toggle Smart Switch
+    // Toggle Smart Switch (Master Toggle across all sections)
     toggleSwitch(switchId) {
         if (!window.smartUpsAuth.canToggle()) {
             return { success: false, message: "Permission Denied: Viewer role cannot operate circuit breakers." };
@@ -300,14 +312,125 @@ class SmartUpsEngine {
             return { success: false, message: `Switch [${sw.name}] is physically locked. Administrator authentication required to toggle.` };
         }
 
+        if (typeof ensureSwitchSections === 'function') {
+            ensureSwitchSections(sw);
+        }
+
         sw.state = !sw.state;
         sw.lastChanged = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        this.playRelaySound(sw.state);
 
+        // Synchronize all sub-sections with master state
+        if (sw.sections && Array.isArray(sw.sections)) {
+            sw.sections.forEach(sec => {
+                sec.state = sw.state;
+                if (!sw.state) {
+                    sec.savedWatts = sec.watts || 45;
+                    sec.watts = 0;
+                } else {
+                    sec.watts = sec.savedWatts || Math.floor(Math.random() * 35 + 35);
+                }
+            });
+            sw.currentLoadWatts = sw.sections.reduce((acc, s) => acc + (s.state ? (s.watts || 0) : 0), 0);
+        }
+
+        this.playRelaySound(sw.state);
         this.logEvent("info", `Smart Switch [${sw.name}] turned ${sw.state ? 'ON' : 'OFF'} by ${window.smartUpsAuth.getCurrentUser().name}.`);
         saveSystemData(this.data);
         this.notifyUpdate();
         return { success: true, state: sw.state, name: sw.name };
+    }
+
+    // Toggle Individual Sub-Channel Section (1, 2, 3, 4)
+    toggleSwitchSection(switchId, sectionId) {
+        if (!window.smartUpsAuth.canToggle()) {
+            return { success: false, message: "Permission Denied: Viewer role cannot operate circuit breakers." };
+        }
+
+        const sw = this.data.switches.find(s => s.id === switchId);
+        if (!sw) return { success: false, message: "Switch not found." };
+
+        if (sw.locked && !window.smartUpsAuth.isAdmin()) {
+            return { success: false, message: `Switch [${sw.name}] is physically locked.` };
+        }
+
+        if (typeof ensureSwitchSections === 'function') {
+            ensureSwitchSections(sw);
+        }
+
+        const sec = sw.sections.find(s => s.id === sectionId);
+        if (!sec) return { success: false, message: "Section not found." };
+
+        sec.state = !sec.state;
+        if (!sec.state) {
+            sec.savedWatts = sec.watts || 45;
+            sec.watts = 0;
+        } else {
+            sec.watts = sec.savedWatts || Math.floor(Math.random() * 35 + 35);
+        }
+
+        // Recalculate switch total load and master state
+        sw.currentLoadWatts = sw.sections.reduce((acc, s) => acc + (s.state ? (s.watts || 0) : 0), 0);
+        sw.state = sw.sections.some(s => s.state);
+        sw.lastChanged = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        this.playRelaySound(sec.state);
+        this.logEvent("info", `[${sw.name}] Section ${sec.id} (${sec.label}) turned ${sec.state ? 'ON' : 'OFF'}.`);
+        saveSystemData(this.data);
+        this.notifyUpdate();
+        return { success: true, state: sec.state, switchState: sw.state };
+    }
+
+    // Add another section (channel) to a switch (up to 4)
+    addSwitchSection(switchId, label) {
+        if (!window.smartUpsAuth.canConfigure()) {
+            return { success: false, message: "Permission Denied: Configuration role required." };
+        }
+
+        const sw = this.data.switches.find(s => s.id === switchId);
+        if (!sw) return { success: false, message: "Switch not found." };
+
+        if (typeof ensureSwitchSections === 'function') {
+            ensureSwitchSections(sw);
+        }
+
+        if (sw.sections.length >= 4) {
+            return { success: false, message: "Maximum 4 sections allowed per smart switch." };
+        }
+
+        const nextId = sw.sections.length + 1;
+        const secLabel = (label && label.trim()) || `Circuit ${nextId}`;
+        const newSecWatts = Math.floor(Math.random() * 35 + 35);
+
+        sw.sections.push({
+            id: nextId,
+            label: secLabel,
+            state: true,
+            watts: newSecWatts
+        });
+
+        sw.currentLoadWatts = sw.sections.reduce((acc, s) => acc + (s.state ? (s.watts || 0) : 0), 0);
+        sw.state = true;
+
+        this.playBeep(880, 0.1);
+        this.logEvent("success", `Added Section ${nextId} (${secLabel}) to [${sw.name}].`);
+        saveSystemData(this.data);
+        this.notifyUpdate();
+        return { success: true, sectionId: nextId };
+    }
+
+    // Rename Section Label
+    renameSwitchSection(switchId, sectionId, newLabel) {
+        const sw = this.data.switches.find(s => s.id === switchId);
+        if (!sw || !sw.sections) return { success: false };
+
+        const sec = sw.sections.find(s => s.id === sectionId);
+        if (!sec) return { success: false };
+
+        sec.label = newLabel.trim();
+        this.logEvent("info", `[${sw.name}] Section ${sec.id} renamed to "${sec.label}".`);
+        saveSystemData(this.data);
+        this.notifyUpdate();
+        return { success: true };
     }
 
     // Toggle Smart Socket Outlet
@@ -423,6 +546,30 @@ class SmartUpsEngine {
     // Add newly paired device
     addPairedDevice(deviceConfig) {
         if (deviceConfig.type === 'switch') {
+            let sections = [];
+            if (deviceConfig.sections && Array.isArray(deviceConfig.sections) && deviceConfig.sections.length > 0) {
+                sections = deviceConfig.sections.map((sec, idx) => ({
+                    id: idx + 1,
+                    label: sec.label || `Circuit ${idx + 1}`,
+                    state: deviceConfig.initialState !== false,
+                    watts: sec.watts || Math.floor(Math.random() * 35 + 35)
+                }));
+            } else {
+                const count = parseInt(deviceConfig.sectionCount, 10) || 1;
+                for (let i = 1; i <= count; i++) {
+                    sections.push({
+                        id: i,
+                        label: `Circuit ${i}`,
+                        state: deviceConfig.initialState !== false,
+                        watts: Math.floor(Math.random() * 35 + 35)
+                    });
+                }
+            }
+
+            const initialLoad = deviceConfig.initialState !== false
+                ? sections.reduce((acc, s) => acc + (s.state ? (s.watts || 0) : 0), 0)
+                : 0;
+
             const newSwitch = {
                 id: "sw_" + Date.now().toString(36),
                 name: deviceConfig.name || "Smart Switch Pro",
@@ -431,13 +578,14 @@ class SmartUpsEngine {
                 state: deviceConfig.initialState !== false,
                 locked: false,
                 priority: deviceConfig.priority || "essential",
-                currentLoadWatts: Math.floor(Math.random() * 120 + 60),
+                currentLoadWatts: initialLoad,
                 ratedAmps: deviceConfig.ratedAmps || 16,
                 lastChanged: "Just now",
-                isNewlyPaired: true
+                isNewlyPaired: true,
+                sections: sections
             };
             this.data.switches.unshift(newSwitch);
-            this.logEvent("success", `Newly paired device [${newSwitch.name}] enrolled in ${newSwitch.room}.`);
+            this.logEvent("success", `Newly paired device [${newSwitch.name}] with ${sections.length} section(s) enrolled in ${newSwitch.room}.`);
         } else if (deviceConfig.type === 'outlet') {
             const newOutlet = {
                 id: "sock_" + Date.now().toString(36),
