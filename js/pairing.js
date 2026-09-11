@@ -70,30 +70,6 @@ class PairingManager {
             });
         }
 
-        // Step 4 Section Selection buttons
-        document.querySelectorAll('.btn-select-cfg-section').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const sec = parseInt(btn.dataset.section) || 1;
-                this.setCfgSection(sec);
-            });
-        });
-
-        // Step 4 Priority Explainer updates
-        const prioritySelect = document.getElementById('cfgPriority');
-        const priorityExplainer = document.getElementById('cfgPriorityExplainer');
-        if (prioritySelect && priorityExplainer) {
-            prioritySelect.addEventListener('change', (e) => {
-                const val = e.target.value;
-                if (val === 'critical') {
-                    priorityExplainer.textContent = "🛡️ Never auto-shed. Remains energized until 0% battery exhaustion.";
-                } else if (val === 'essential') {
-                    priorityExplainer.textContent = "⚡ Sheds at <20% battery during prolonged outage to protect core systems.";
-                } else if (val === 'non-essential') {
-                    priorityExplainer.textContent = "✂️ Sheds immediately upon utility grid failure to conserve UPS runtime.";
-                }
-            });
-        }
-
         // Step 4 Form submit
         const configForm = document.getElementById('pairingConfigForm');
         if (configForm) {
@@ -101,27 +77,6 @@ class PairingManager {
                 e.preventDefault();
                 this.finalizePairing();
             });
-        }
-    }
-
-    setCfgSection(sectionNum) {
-        this.targetSection = sectionNum;
-        const hidden = document.getElementById('cfgSectionValue');
-        if (hidden) hidden.value = sectionNum;
-
-        document.querySelectorAll('.btn-select-cfg-section').forEach(b => {
-            const bSec = parseInt(b.dataset.section);
-            if (bSec === sectionNum) {
-                b.className = "btn-select-cfg-section py-2 px-1 rounded-lg border text-center transition-all cursor-pointer border-cyan-500 bg-cyan-950/60 text-cyan-300 font-bold shadow-sm shadow-cyan-500/20";
-            } else {
-                b.className = "btn-select-cfg-section py-2 px-1 rounded-lg border text-center transition-all cursor-pointer border-slate-700 bg-slate-950 text-slate-400 hover:border-slate-600";
-            }
-        });
-
-        const labelInput = document.getElementById('cfgSectionLabel');
-        if (labelInput && window.smartUpsEngine) {
-            const existingLabel = window.smartUpsEngine.data?.sectionLabels?.[sectionNum];
-            labelInput.value = existingLabel || `Section ${sectionNum}`;
         }
     }
 
@@ -140,9 +95,8 @@ class PairingManager {
         this.modal.classList.add('flex');
     }
 
-    openForType(type, targetSection = 1) {
+    openForType(type) {
         this.open();
-        this.targetSection = parseInt(targetSection) || 1;
         if (type) {
             this.selectDeviceType(type);
         }
@@ -440,22 +394,12 @@ class PairingManager {
         const nameInput = document.getElementById('cfgDeviceName');
         const roomInput = document.getElementById('cfgRoomName');
         const typeBadge = document.getElementById('cfgDeviceTypeBadge');
-        const sectionGroup = document.getElementById('cfgSectionGroup');
 
         if (nameInput && device) {
             nameInput.value = `${device.name} - Unit ${Math.floor(Math.random() * 90 + 10)}`;
         }
         if (typeBadge && device) {
             typeBadge.textContent = `${device.type.toUpperCase()} • ${device.protocol}`;
-        }
-
-        if (sectionGroup) {
-            if (device && device.type === 'switch') {
-                sectionGroup.classList.remove('hidden');
-                this.setCfgSection(this.targetSection || 1);
-            } else {
-                sectionGroup.classList.add('hidden');
-            }
         }
     }
 
@@ -465,29 +409,19 @@ class PairingManager {
         const room = document.getElementById('cfgRoomName')?.value || "Control Lab";
         const priority = document.getElementById('cfgPriority')?.value || "essential";
         const initialState = document.getElementById('cfgInitialState')?.checked ?? true;
-        const sectionVal = parseInt(document.getElementById('cfgSectionValue')?.value) || (this.targetSection || 1);
-        const sectionLabelVal = document.getElementById('cfgSectionLabel')?.value.trim() || `Section ${sectionVal}`;
 
         const config = {
             type: this.selectedCatalogItem.type,
             name: name.trim(),
             room: room.trim(),
-            section: sectionVal,
-            sectionLabel: sectionLabelVal,
             priority: priority,
             initialState: initialState,
             ratedAmps: this.selectedCatalogItem.ratedAmps
         };
 
-        if (window.smartUpsEngine) {
-            window.smartUpsEngine.addPairedDevice(config);
-        }
+        window.smartUpsEngine.addPairedDevice(config);
 
-        const successMsg = config.type === 'switch'
-            ? `Smart switch "${config.name}" integrated into Section ${config.section} (${config.sectionLabel})!`
-            : `Device "${config.name}" successfully integrated into ${config.room}!`;
-
-        window.showToast(successMsg, "success");
+        window.showToast(`Device "${config.name}" successfully integrated into ${config.room}!`, "success");
         this.close();
 
         // Scroll to dashboard switches / sockets section
