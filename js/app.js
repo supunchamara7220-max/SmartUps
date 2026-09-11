@@ -543,8 +543,11 @@ function renderSwitchesList(switches) {
     if (!container) return;
 
     if (!switches || switches.length === 0) {
+        if (container.querySelector('.btn-pair-switch-empty')) {
+            return; // Already rendered: prevent DOM recreation and pulsing
+        }
         container.innerHTML = `
-            <div class="col-span-full py-10 px-6 rounded-2xl border border-dashed border-cyan-500/30 bg-slate-950/40 text-center space-y-3 animate-fade-in">
+            <div class="col-span-full py-10 px-6 rounded-2xl border border-dashed border-cyan-500/30 bg-slate-950/40 text-center space-y-3">
                 <div class="w-14 h-14 mx-auto rounded-2xl bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center text-2xl text-cyan-400">⚡</div>
                 <div>
                     <h4 class="text-sm font-bold text-white tracking-wide">No Smart Switches Paired</h4>
@@ -685,8 +688,11 @@ function renderOutletsList(outlets) {
     if (!container) return;
 
     if (!outlets || outlets.length === 0) {
+        if (container.querySelector('.btn-pair-outlet-empty')) {
+            return; // Already rendered: prevent DOM recreation and pulsing
+        }
         container.innerHTML = `
-            <div class="col-span-full py-10 px-6 rounded-2xl border border-dashed border-emerald-500/30 bg-slate-950/40 text-center space-y-3 animate-fade-in">
+            <div class="col-span-full py-10 px-6 rounded-2xl border border-dashed border-emerald-500/30 bg-slate-950/40 text-center space-y-3">
                 <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-center text-2xl text-emerald-400">🔌</div>
                 <div>
                     <h4 class="text-sm font-bold text-white tracking-wide">No Smart Socket Outlets Paired</h4>
