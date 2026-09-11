@@ -89,29 +89,7 @@ class PairingManager {
             });
         });
 
-        // Step 4 Add Section button
-        const addSecBtn = document.getElementById('btnCfgAddSection');
-        if (addSecBtn) {
-            addSecBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const current = this.sectionCount || 1;
-                if (current < 4) {
-                    this.setSectionCount(current + 1);
-                } else {
-                    window.showToast("Maximum 4 sections allowed per smart switch.", "info");
-                }
-            });
         }
-
-        // Step 4 Load Shedding Tier change listener
-        const prioritySelect = document.getElementById('cfgPriority');
-        if (prioritySelect) {
-            prioritySelect.addEventListener('change', () => {
-                this.updatePriorityExplainer(prioritySelect.value);
-            });
-        }
-    }
 
     open() {
         if (!window.smartUpsAuth.isAuthenticated()) {
@@ -435,55 +413,6 @@ class PairingManager {
                 btn.className = "btn-cfg-sec-count w-7 h-7 rounded-lg text-xs font-mono font-bold transition-all border border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-500 cursor-pointer";
             }
         });
-        this.renderSectionInputs();
-    }
-
-    renderSectionInputs() {
-        const container = document.getElementById('cfgSectionsInputsList');
-        if (!container) return;
-
-        // Preserve already typed labels
-        const existingValues = {};
-        container.querySelectorAll('.cfg-section-label-input').forEach(inp => {
-            existingValues[inp.dataset.secId] = inp.value;
-        });
-
-        let html = '';
-        for (let i = 1; i <= this.sectionCount; i++) {
-            // User requested: default 1 named "Default Section"
-            const defaultLabel = i === 1 ? "Default Section" : `Section ${i}`;
-            const val = (existingValues[i] !== undefined && existingValues[i].trim().length > 0)
-                ? existingValues[i]
-                : defaultLabel;
-
-            html += `
-                <div class="flex items-center gap-2">
-                    <span class="w-6 h-6 rounded-md bg-slate-900 border border-slate-700 text-cyan-400 font-mono text-xs flex items-center justify-center font-bold flex-shrink-0">${i}</span>
-                    <input type="text" 
-                           class="cfg-section-label-input flex-1 px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs focus:border-cyan-400 focus:outline-none" 
-                           data-sec-id="${i}" 
-                           value="${val}" 
-                           placeholder="Label for Section ${i}">
-                </div>
-            `;
-        }
-        container.innerHTML = html;
-    }
-
-    updatePriorityExplainer(priority) {
-        const explainer = document.getElementById('cfgPriorityExplainer');
-        if (!explainer) return;
-
-        if (priority === 'critical') {
-            explainer.className = "p-2.5 rounded-xl bg-purple-950/40 border border-purple-500/30 text-[11px] text-purple-200";
-            explainer.innerHTML = `🟣 <strong>Critical:</strong> Never auto-sheds. SmartUps maintains continuous power until 0% battery reserve or physical emergency shutdown.`;
-        } else if (priority === 'non-essential') {
-            explainer.className = "p-2.5 rounded-xl bg-slate-900/60 border border-slate-700 text-[11px] text-slate-300";
-            explainer.innerHTML = `⚪ <strong>Non-Essential:</strong> Sheds immediately upon grid failure / blackout mode to preserve battery capacity for critical loads.`;
-        } else {
-            explainer.className = "p-2.5 rounded-xl bg-blue-950/40 border border-blue-500/30 text-[11px] text-blue-200";
-            explainer.innerHTML = `🔵 <strong>Essential (Default):</strong> Operates on UPS battery during outage; automatically sheds if battery falls below 20% to safeguard Critical loads.`;
-        }
     }
 
     prepareConfigurationStep() {
@@ -509,15 +438,10 @@ class PairingManager {
         if (switchBox) {
             if (device && device.type === 'switch') {
                 switchBox.classList.remove('hidden');
-                this.setSectionCount(1); // User request: default 1 named "Default Section"
+                this.setSectionCount(1);
             } else {
                 switchBox.classList.add('hidden');
             }
-        }
-
-        const prioritySelect = document.getElementById('cfgPriority');
-        if (prioritySelect) {
-            this.updatePriorityExplainer(prioritySelect.value || 'essential');
         }
     }
 
@@ -525,7 +449,7 @@ class PairingManager {
         if (!this.selectedCatalogItem) return;
         const name = document.getElementById('cfgDeviceName')?.value || this.selectedCatalogItem.name;
         const room = document.getElementById('cfgRoomName')?.value || "Server Room";
-        const priority = document.getElementById('cfgPriority')?.value || "essential";
+        const priority = "essential";
         const initialState = document.getElementById('cfgInitialState')?.checked ?? true;
 
         const config = {
@@ -538,21 +462,17 @@ class PairingManager {
         };
 
         if (config.type === 'switch') {
-            const sectionInputs = document.querySelectorAll('.cfg-section-label-input');
+            const count = this.sectionCount || 1;
             const sections = [];
-            sectionInputs.forEach(inp => {
-                const secId = parseInt(inp.dataset.secId, 10) || 1;
-                const secLabel = inp.value.trim() || `Circuit ${secId}`;
+            for (let i = 1; i <= count; i++) {
                 sections.push({
-                    id: secId,
-                    label: secLabel,
+                    id: i,
+                    label: i === 1 ? "Default Section" : `Section ${i}`,
                     state: initialState,
                     watts: Math.floor(Math.random() * 35 + 35)
                 });
-            });
-            config.sections = sections.length > 0 ? sections : [
-                { id: 1, label: `${config.name} - Circuit 1`, state: initialState, watts: 60 }
-            ];
+            }
+            config.sections = sections;
         }
 
         window.smartUpsEngine.addPairedDevice(config);

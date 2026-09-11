@@ -633,28 +633,17 @@
                             <input type="text" id="cfgDeviceName" required class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:border-cyan-400 focus:outline-none">
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-300 mb-1">Room / Zone</label>
-                                <input type="text" id="cfgRoomName" list="roomSuggestions" placeholder="e.g. Server Room, Living Room" value="Server Room" required class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:border-cyan-400 focus:outline-none">
-                                <datalist id="roomSuggestions">
-                                    <option value="Server Room">
-                                    <option value="Control Lab">
-                                    <option value="Telecom Closet">
-                                    <option value="Fabrication Lab">
-                                    <option value="Main Office">
-                                    <option value="Living Room">
-                                </datalist>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-300 mb-1">Load Shedding Tier</label>
-                                <select id="cfgPriority" class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:border-cyan-400 focus:outline-none">
-                                    <option value="critical">Critical (Never auto-shed)</option>
-                                    <option value="essential" selected>Essential (Shed at &lt;20% batt)</option>
-                                    <option value="non-essential">Non-Essential (Shed on grid loss)</option>
-                                </select>
-                            </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Room / Zone</label>
+                            <input type="text" id="cfgRoomName" list="roomSuggestions" placeholder="e.g. Server Room, Living Room" value="Server Room" required class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:border-cyan-400 focus:outline-none">
+                            <datalist id="roomSuggestions">
+                                <option value="Server Room">
+                                <option value="Control Lab">
+                                <option value="Telecom Closet">
+                                <option value="Fabrication Lab">
+                                <option value="Main Office">
+                                <option value="Living Room">
+                            </datalist>
                         </div>
 
                         <!-- Switch Multi-Channel / Section Configuration (1-4 Sections) -->
@@ -665,7 +654,7 @@
                                         <span>⚡</span>
                                         <span>Switch Sections / Channels</span>
                                     </label>
-                                    <p class="text-[11px] text-slate-400">Divide this switch into independent sub-circuits (1 to 4 sections)</p>
+                                    <p class="text-[11px] text-slate-400">Select number of independent sub-circuits (1 to 4)</p>
                                 </div>
                                 <div class="flex items-center gap-1" id="cfgSectionCountGroup">
                                     <button type="button" class="btn-cfg-sec-count w-7 h-7 rounded-lg text-xs font-mono font-bold transition-all border border-cyan-500 bg-cyan-500/20 text-cyan-300 shadow-sm shadow-cyan-500/30 cursor-pointer" data-count="1">1</button>
@@ -674,23 +663,6 @@
                                     <button type="button" class="btn-cfg-sec-count w-7 h-7 rounded-lg text-xs font-mono font-bold transition-all border border-slate-700 bg-slate-800 text-slate-300 hover:border-slate-500 cursor-pointer" data-count="4">4</button>
                                 </div>
                             </div>
-
-                            <!-- Dynamic Section Labels Container -->
-                            <div id="cfgSectionsInputsList" class="space-y-2">
-                                <!-- Populated by pairing.js -->
-                            </div>
-
-                            <div class="flex items-center justify-between pt-1 border-t border-slate-800/80">
-                                <span class="text-[10px] text-slate-400 font-mono">Label each section for the card controls</span>
-                                <button type="button" id="btnCfgAddSection" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-cyan-500 text-[11px] font-semibold text-cyan-400 transition-colors flex items-center gap-1 cursor-pointer">
-                                    <span>＋</span><span>Add Section</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Load Shedding Tier Explainer -->
-                        <div id="cfgPriorityExplainer" class="p-2.5 rounded-xl bg-blue-950/40 border border-blue-500/30 text-[11px] text-blue-200">
-                            🔵 <strong>Essential (Default):</strong> Operates on UPS battery during outage; automatically sheds if battery falls below 20% to safeguard Critical loads.
                         </div>
 
                         <div class="flex items-center gap-3 pt-2">
