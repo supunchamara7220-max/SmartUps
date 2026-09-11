@@ -294,12 +294,12 @@
                     <span class="text-purple-400 font-mono">Reserve Load</span>
                 </div>
                 <div class="flex items-baseline gap-2">
-                    <span id="metricEstimatedRuntime" class="text-3xl font-extrabold text-white font-mono">4h 18m</span>
-                    <span class="text-xs text-slate-400">at active load</span>
+                    <span id="metricEstimatedRuntime" class="text-3xl font-extrabold text-white font-mono">0m</span>
+                    <span id="metricEstimatedRuntimeSub" class="text-xs text-slate-400">(no load)</span>
                 </div>
                 <div class="flex items-center justify-between text-xs text-slate-400 font-mono mt-3 pt-3 border-t border-slate-800">
                     <span>Capacity: <strong class="text-purple-300">2,400 Wh</strong></span>
-                    <span>Smart Shedding Active</span>
+                    <span>Smart Shedding Ready</span>
                 </div>
             </div>
 
@@ -308,18 +308,18 @@
                 <div class="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl pointer-events-none"></div>
                 <div class="flex items-center justify-between text-xs text-slate-400 font-mono mb-2">
                     <span>OUTPUT LOAD</span>
-                    <span id="metricLoadPercent" class="text-amber-400 font-bold font-mono">42%</span>
+                    <span id="metricLoadPercent" class="text-amber-400 font-bold font-mono">0%</span>
                 </div>
                 <div class="flex items-baseline justify-between">
                     <div class="flex items-baseline gap-2">
-                        <span id="metricTotalLoad" class="text-3xl font-extrabold text-amber-400 font-mono">1,135 W</span>
+                        <span id="metricTotalLoad" class="text-3xl font-extrabold text-amber-400 font-mono">0 W</span>
                         <span class="text-xs text-slate-400 font-mono">/ 2.7kW</span>
                     </div>
-                    <span id="metricTotalAmps" class="text-xs font-mono text-slate-400">4.93 A</span>
+                    <span id="metricTotalAmps" class="text-xs font-mono text-slate-400">0.00 A</span>
                 </div>
                 <!-- Progress Bar -->
                 <div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden mt-3">
-                    <div id="loadCapacityBar" class="h-full rounded-full bg-gradient-to-r from-cyan-500 to-amber-500 transition-all duration-500" style="width: 42%;"></div>
+                    <div id="loadCapacityBar" class="h-full rounded-full bg-slate-800 transition-all duration-500" style="width: 0%;"></div>
                 </div>
             </div>
         </section>

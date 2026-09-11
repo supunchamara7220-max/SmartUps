@@ -196,6 +196,20 @@ class AuthManager {
         users.push(newUser);
         localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
 
+        // Guarantee new account starts with zero devices, 0 load, and 0 runtime
+        const cleanState = JSON.parse(JSON.stringify(DEFAULT_SYSTEM_DATA));
+        cleanState.switches = [];
+        cleanState.outlets = [];
+        cleanState.logs = [
+            {
+                id: Date.now(),
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                type: "info",
+                text: `Welcome, ${newUser.name}! Account created with clean power topology. No pre-assigned devices. Output load: 0 W.`
+            }
+        ];
+        localStorage.setItem(`smartups_system_state_v1_${newUser.id}`, JSON.stringify(cleanState));
+
         // Auto-login newly registered user
         this.currentUser = newUser;
         this.saveSession();

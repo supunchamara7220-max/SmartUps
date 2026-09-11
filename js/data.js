@@ -6,7 +6,7 @@
 const STORAGE_KEY = 'smartups_system_state_v1';
 const AUTH_STORAGE_KEY = 'smartups_auth_user_v1';
 
-// Default system dataset
+// Default system dataset (Clean slate for all newly created accounts and users: 0 devices, 0 load)
 const DEFAULT_SYSTEM_DATA = {
     // UPS Core System Stats
     ups: {
@@ -14,17 +14,51 @@ const DEFAULT_SYSTEM_DATA = {
         firmware: "v4.2.1-PRO",
         serialNumber: "SU-2026-98174X",
         status: "online", // "online" (grid), "battery", "bypass", "fault"
-        gridVoltage: 231.4, // Volts
-        gridFrequency: 50.02, // Hz
+        gridVoltage: 230.0, // Volts
+        gridFrequency: 50.0, // Hz
         outputVoltage: 230.0, // Volts pure sine
-        batteryLevel: 94, // %
-        batteryVoltage: 52.4, // Volts (48V nominal LiFePO4 bank)
-        batteryHealth: 99, // %
-        batteryTemp: 28.5, // °C
-        batteryCycles: 42,
+        batteryLevel: 100, // %
+        batteryVoltage: 54.0, // Volts (48V nominal LiFePO4 bank)
+        batteryHealth: 100, // %
+        batteryTemp: 26.0, // °C
+        batteryCycles: 12,
         batteryCapacityWh: 2400, // Watt-hours total
         maxLoadWatts: 2700, // 3000VA * 0.9 PF
         mode: "ups_priority", // "eco", "high_efficiency", "ups_priority", "peak_shaving"
+        isSimulatedBlackout: false,
+        soundEnabled: true,
+        lastEvent: "System online. 0 active load. Ready to pair smart devices."
+    },
+    switches: [],
+    outlets: [],
+    logs: [
+        {
+            id: Date.now(),
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+            type: "info",
+            text: "Clean power topology initialized. 0 devices connected. Output load: 0 W."
+        }
+    ]
+};
+
+// Admin demo hardware cluster (available for System Administrator demo)
+const ADMIN_SYSTEM_DATA = {
+    ups: {
+        model: "SmartUps Pro Ultra 3000VA",
+        firmware: "v4.2.1-PRO",
+        serialNumber: "SU-2026-98174X",
+        status: "online",
+        gridVoltage: 231.4,
+        gridFrequency: 50.02,
+        outputVoltage: 230.0,
+        batteryLevel: 94,
+        batteryVoltage: 52.4,
+        batteryHealth: 99,
+        batteryTemp: 28.5,
+        batteryCycles: 42,
+        batteryCapacityWh: 2400,
+        maxLoadWatts: 2700,
+        mode: "ups_priority",
         isSimulatedBlackout: false,
         soundEnabled: true,
         lastEvent: "System running normally on utility grid power."
@@ -315,24 +349,30 @@ const DEMO_USERS = [
 function getSystemData(user) {
     const activeUser = user || (window.smartUpsAuth ? window.smartUpsAuth.getCurrentUser() : null);
     const userId = activeUser ? activeUser.id : 'guest';
-    const isCustom = activeUser ? activeUser.isCustomAccount : false;
+    const isAdmin = activeUser ? (activeUser.id === 'usr_admin' || activeUser.role === 'admin') : false;
     const userStorageKey = `${STORAGE_KEY}_${userId}`;
 
     try {
         const stored = localStorage.getItem(userStorageKey);
         if (stored) {
-            return JSON.parse(stored);
+            const parsed = JSON.parse(stored);
+            // If user is non-admin and still has pre-assigned demo devices (e.g. sw_1 from previous version), purge them immediately!
+            if (!isAdmin && parsed && parsed.switches && parsed.switches.some(s => s.id === 'sw_1')) {
+                parsed.switches = [];
+                parsed.outlets = [];
+                saveSystemData(parsed, userId);
+            }
+            return parsed;
         }
     } catch (e) {
         console.warn("Could not read user state from localStorage", e);
     }
 
-    // Initialize fresh system data
-    const data = JSON.parse(JSON.stringify(DEFAULT_SYSTEM_DATA));
+    // Initialize fresh system data:
+    // Admin gets the full demo hardware cluster, everyone else gets 0 devices!
+    const data = isAdmin ? JSON.parse(JSON.stringify(ADMIN_SYSTEM_DATA)) : JSON.parse(JSON.stringify(DEFAULT_SYSTEM_DATA));
 
-    // When a user creates an account: NO pre-assigned devices!
-    // They have full ability to add devices as they wish via "+ Pair New Device"
-    if (isCustom) {
+    if (!isAdmin) {
         data.switches = [];
         data.outlets = [];
         data.logs = [
@@ -340,7 +380,7 @@ function getSystemData(user) {
                 id: Date.now(),
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
                 type: "info",
-                text: `Welcome, ${activeUser.name}! Account created with clean power topology. No pre-assigned devices. Use "+ Pair New Device" to enroll switches and sockets.`
+                text: `Welcome, ${activeUser ? activeUser.name : 'User'}! 0 pre-assigned devices. Output load: 0 W. Estimated runtime: 0m. Use "+ Pair New Device" to pair hardware.`
             }
         ];
     }

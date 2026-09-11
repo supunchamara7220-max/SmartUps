@@ -373,7 +373,7 @@ function renderDashboard(data) {
     safeSetText('metricOutputVoltage', `${data.ups.outputVoltage.toFixed(1)} V`);
     safeSetText('metricFrequency', `${data.ups.gridFrequency.toFixed(2)} Hz`);
     safeSetText('metricTotalLoad', `${totalWatts} W`);
-    safeSetText('metricTotalAmps', `${totalAmps} A`);
+    safeSetText('metricTotalAmps', `${totalAmps.toFixed(2)} A`);
     safeSetText('metricLoadPercent', `${percentCapacity}%`);
 
     // Load progress bar
@@ -382,8 +382,10 @@ function renderDashboard(data) {
         loadBar.style.width = `${percentCapacity}%`;
         if (percentCapacity > 80) {
             loadBar.className = "h-full rounded-full transition-all duration-500 bg-gradient-to-r from-amber-500 to-rose-500";
-        } else {
+        } else if (percentCapacity > 0) {
             loadBar.className = "h-full rounded-full transition-all duration-500 bg-gradient-to-r from-cyan-500 to-emerald-400";
+        } else {
+            loadBar.className = "h-full rounded-full transition-all duration-500 bg-slate-800";
         }
     }
 
@@ -394,11 +396,21 @@ function renderDashboard(data) {
     safeSetText('metricBatteryHealth', `${data.ups.batteryHealth}%`);
     safeSetText('metricBatteryTemp', `${data.ups.batteryTemp}°C`);
 
-    // Runtime formatted (HH:MM or mins)
-    const hours = Math.floor(runtimeMins / 60);
-    const mins = runtimeMins % 60;
-    const runtimeStr = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+    // Runtime formatted (0m when totalWatts is 0)
+    let runtimeStr = "0m";
+    if (runtimeMins > 0) {
+        const hours = Math.floor(runtimeMins / 60);
+        const mins = runtimeMins % 60;
+        runtimeStr = hours > 0 ? `${hours}h ${mins < 10 ? '0' : ''}${mins}m` : `${mins}m`;
+    } else {
+        runtimeStr = "0m";
+    }
     safeSetText('metricEstimatedRuntime', runtimeStr);
+
+    const runtimeSub = document.getElementById('metricEstimatedRuntimeSub');
+    if (runtimeSub) {
+        runtimeSub.textContent = totalWatts > 0 ? "at active load" : "(no load)";
+    }
 
     // Battery bar gauge
     const batteryBar = document.getElementById('batteryBarFill');

@@ -145,21 +145,25 @@ class SmartUpsEngine {
         let switchWatts = 0;
         let outletWatts = 0;
 
-        this.data.switches.forEach(sw => {
-            if (sw.state) {
-                switchWatts += (sw.currentLoadWatts || 0);
-            }
-        });
+        if (this.data.switches && Array.isArray(this.data.switches)) {
+            this.data.switches.forEach(sw => {
+                if (sw.state) {
+                    switchWatts += (sw.currentLoadWatts || 0);
+                }
+            });
+        }
 
-        this.data.outlets.forEach(sock => {
-            if (sock.state) {
-                outletWatts += (sock.powerWatts || 0);
-            }
-        });
+        if (this.data.outlets && Array.isArray(this.data.outlets)) {
+            this.data.outlets.forEach(sock => {
+                if (sock.state) {
+                    outletWatts += (sock.powerWatts || 0);
+                }
+            });
+        }
 
         const totalWatts = Math.round(switchWatts + outletWatts);
-        const percentCapacity = Math.min(100, Math.round((totalWatts / this.data.ups.maxLoadWatts) * 100));
-        const totalAmps = parseFloat((totalWatts / (this.data.ups.outputVoltage || 230)).toFixed(2));
+        const percentCapacity = totalWatts > 0 ? Math.min(100, Math.round((totalWatts / this.data.ups.maxLoadWatts) * 100)) : 0;
+        const totalAmps = totalWatts > 0 ? parseFloat((totalWatts / (this.data.ups.outputVoltage || 230)).toFixed(2)) : 0.0;
 
         return {
             switchWatts,
@@ -172,7 +176,8 @@ class SmartUpsEngine {
 
     calculateRuntimeMinutes() {
         const { totalWatts } = this.calculateTotalLoad();
-        if (totalWatts <= 0) return 999; // Idle runtime
+        // When output load is zero, estimated runtime must be zero
+        if (totalWatts <= 0) return 0;
 
         // Effective usable Watt-hours with 88% inverter efficiency
         const usableWh = this.data.ups.batteryCapacityWh * (this.data.ups.batteryLevel / 100) * 0.88;
