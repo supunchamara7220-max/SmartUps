@@ -107,6 +107,29 @@ class AuthManager {
 
         this.currentUser = user;
         this.saveSession();
+
+        // Automatically clear stale cache when signing in
+        const isAdmin = user.id === 'usr_admin' || user.role === 'admin';
+        try {
+            localStorage.removeItem('smartups_system_state_v1');
+            localStorage.removeItem('smartups_system_state_v1_guest');
+            // If signing into non-admin account, purge old mock devices from cache
+            if (!isAdmin) {
+                const userKey = `smartups_system_state_v1_${user.id}`;
+                const cached = localStorage.getItem(userKey);
+                if (cached) {
+                    const parsed = JSON.parse(cached);
+                    if (parsed && parsed.switches && parsed.switches.some(s => s.id === 'sw_1')) {
+                        parsed.switches = [];
+                        parsed.outlets = [];
+                        localStorage.setItem(userKey, JSON.stringify(parsed));
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn("Could not purge stale cache keys", e);
+        }
+
         this.emitAuthChange();
         return { success: true, user: this.currentUser };
     }
@@ -196,6 +219,13 @@ class AuthManager {
         users.push(newUser);
         localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
 
+        // When creating new account: clear old stale cache keys
+        try {
+            localStorage.removeItem('smartups_system_state_v1');
+            localStorage.removeItem('smartups_system_state_v1_guest');
+            localStorage.removeItem(`smartups_system_state_v1_${newUser.id}`);
+        } catch (e) {}
+
         // Guarantee new account starts with zero devices, 0 load, and 0 runtime
         const cleanState = JSON.parse(JSON.stringify(DEFAULT_SYSTEM_DATA));
         cleanState.switches = [];
@@ -257,3 +287,26 @@ class AuthManager {
 
 // Global singleton instance
 window.smartUpsAuth = new AuthManager();
+
+// Global cache-clearing utility
+window.clearSmartUpsCache = function(fullReset = false) {
+    try {
+        // Clear all system device state keys
+        Object.keys(localStorage).forEach(k => {
+            if (k.startsWith('smartups_system_state_') || k === 'smartups_system_state_v1' || k === 'smartups_auth_user_v1') {
+                localStorage.removeItem(k);
+            }
+        });
+        if (fullReset) {
+            localStorage.removeItem('smartups_active_session_v1');
+        }
+        if (window.showToast) {
+            window.showToast("Cache cleared successfully! Reloading clean state...", "info");
+        }
+        setTimeout(() => {
+            window.location.reload();
+        }, 300);
+    } catch (e) {
+        console.error("Failed to clear cache", e);
+    }
+};
