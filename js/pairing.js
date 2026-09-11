@@ -499,6 +499,9 @@ class PairingManager {
         if (nameInput && device) {
             nameInput.value = `${device.name} - Unit ${Math.floor(Math.random() * 90 + 10)}`;
         }
+        if (roomInput && (!roomInput.value || !roomInput.value.trim())) {
+            roomInput.value = "Server Room";
+        }
         if (typeBadge && device) {
             typeBadge.textContent = `${device.type.toUpperCase()} • ${device.protocol}`;
         }
@@ -521,7 +524,7 @@ class PairingManager {
     finalizePairing() {
         if (!this.selectedCatalogItem) return;
         const name = document.getElementById('cfgDeviceName')?.value || this.selectedCatalogItem.name;
-        const room = document.getElementById('cfgRoomName')?.value || "Control Lab";
+        const room = document.getElementById('cfgRoomName')?.value || "Server Room";
         const priority = document.getElementById('cfgPriority')?.value || "essential";
         const initialState = document.getElementById('cfgInitialState')?.checked ?? true;
 
