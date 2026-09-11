@@ -21,7 +21,16 @@ class AuthManager {
 
     getAllUsers() {
         try {
-            return JSON.parse(localStorage.getItem(USERS_STORAGE_KEY)) || DEMO_USERS;
+            const stored = JSON.parse(localStorage.getItem(USERS_STORAGE_KEY)) || [];
+            // Merge in default DEMO_USERS so all predefined role logins always exist
+            const merged = [...DEMO_USERS];
+            stored.forEach(u => {
+                if (!merged.some(m => m.email.toLowerCase() === u.email.toLowerCase())) {
+                    merged.push(u);
+                }
+            });
+            localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(merged));
+            return merged;
         } catch (e) {
             return DEMO_USERS;
         }
@@ -50,11 +59,12 @@ class AuthManager {
 
     login(email, password) {
         const users = this.getAllUsers();
-        const normalizedEmail = email.trim().toLowerCase();
-        const user = users.find(u => u.email.toLowerCase() === normalizedEmail && u.password === password);
+        const normalizedEmail = (email || '').trim().toLowerCase();
+        const normalizedPassword = (password || '').trim();
+        const user = users.find(u => u.email.toLowerCase() === normalizedEmail && u.password === normalizedPassword);
 
         if (!user) {
-            return { success: false, message: "Invalid email or password. Please check credentials or use Quick Demo accounts." };
+            return { success: false, message: "Invalid email or password. Please verify your credentials or click 'Create New Account'." };
         }
 
         this.currentUser = user;
@@ -77,7 +87,7 @@ class AuthManager {
 
     register(name, email, password, role = "household_resident") {
         const users = this.getAllUsers();
-        const normalizedEmail = email.trim().toLowerCase();
+        const normalizedEmail = (email || '').trim().toLowerCase();
 
         if (users.some(u => u.email.toLowerCase() === normalizedEmail)) {
             return { success: false, message: "An account with this email address already exists." };
@@ -106,42 +116,43 @@ class AuthManager {
                 avatar: "🏡",
                 title: "Household Resident",
                 canPair: true,
-                canConfigure: false,
+                canConfigure: true,
                 canToggle: true
             },
             office_worker: {
                 avatar: "💼",
                 title: "Office Worker",
-                canPair: false,
-                canConfigure: false,
+                canPair: true,
+                canConfigure: true,
                 canToggle: true
             },
             student: {
                 avatar: "🎓",
                 title: "Student / Researcher",
                 canPair: true,
-                canConfigure: false,
+                canConfigure: true,
                 canToggle: true
             }
         }[role] || {
             avatar: "👤",
             title: "SmartUps User",
-            canPair: false,
-            canConfigure: false,
+            canPair: true,
+            canConfigure: true,
             canToggle: true
         };
 
         const newUser = {
-            id: "usr_" + Date.now().toString(36),
+            id: "usr_custom_" + Date.now().toString(36),
             name: name.trim(),
             email: normalizedEmail,
-            password: password,
+            password: password.trim(),
             role: role,
+            isCustomAccount: true, // Marker: newly created account starts with NO pre-assigned devices!
             avatar: roleMeta.avatar,
             title: roleMeta.title,
-            canPair: roleMeta.canPair,
-            canConfigure: roleMeta.canConfigure,
-            canToggle: roleMeta.canToggle
+            canPair: true, // Ability to add devices as they wish!
+            canConfigure: true,
+            canToggle: true
         };
 
         users.push(newUser);

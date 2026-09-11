@@ -270,7 +270,7 @@ const DEMO_USERS = [
         avatar: "🏡",
         title: "Household Resident",
         canPair: true,
-        canConfigure: false,
+        canConfigure: true,
         canToggle: true
     },
     {
@@ -281,8 +281,8 @@ const DEMO_USERS = [
         role: "office_worker",
         avatar: "💼",
         title: "Office Worker",
-        canPair: false,
-        canConfigure: false,
+        canPair: true,
+        canConfigure: true,
         canToggle: true
     },
     {
@@ -294,7 +294,7 @@ const DEMO_USERS = [
         avatar: "🎓",
         title: "Engineering Student",
         canPair: true,
-        canConfigure: false,
+        canConfigure: true,
         canToggle: true
     },
     {
@@ -311,31 +311,60 @@ const DEMO_USERS = [
     }
 ];
 
-// Helper to load or initialize system data
-function getSystemData() {
+// Helper to load or initialize system data (per-user storage)
+function getSystemData(user) {
+    const activeUser = user || (window.smartUpsAuth ? window.smartUpsAuth.getCurrentUser() : null);
+    const userId = activeUser ? activeUser.id : 'guest';
+    const isCustom = activeUser ? activeUser.isCustomAccount : false;
+    const userStorageKey = `${STORAGE_KEY}_${userId}`;
+
     try {
-        const stored = localStorage.getItem(STORAGE_KEY);
+        const stored = localStorage.getItem(userStorageKey);
         if (stored) {
             return JSON.parse(stored);
         }
     } catch (e) {
-        console.warn("Could not read localStorage, using default data.", e);
+        console.warn("Could not read user state from localStorage", e);
     }
-    saveSystemData(DEFAULT_SYSTEM_DATA);
-    return JSON.parse(JSON.stringify(DEFAULT_SYSTEM_DATA));
+
+    // Initialize fresh system data
+    const data = JSON.parse(JSON.stringify(DEFAULT_SYSTEM_DATA));
+
+    // When a user creates an account: NO pre-assigned devices!
+    // They have full ability to add devices as they wish via "+ Pair New Device"
+    if (isCustom) {
+        data.switches = [];
+        data.outlets = [];
+        data.logs = [
+            {
+                id: Date.now(),
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+                type: "info",
+                text: `Welcome, ${activeUser.name}! Account created with clean power topology. No pre-assigned devices. Use "+ Pair New Device" to enroll switches and sockets.`
+            }
+        ];
+    }
+
+    saveSystemData(data, userId);
+    return data;
 }
 
 // Helper to save system data
-function saveSystemData(data) {
+function saveSystemData(data, userId) {
+    const activeUser = window.smartUpsAuth ? window.smartUpsAuth.getCurrentUser() : null;
+    const id = userId || (activeUser ? activeUser.id : 'guest');
+    const userStorageKey = `${STORAGE_KEY}_${id}`;
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        localStorage.setItem(userStorageKey, JSON.stringify(data));
     } catch (e) {
         console.error("Failed to save state to localStorage", e);
     }
 }
 
 // Helper to reset to factory defaults
-function resetSystemData() {
-    localStorage.removeItem(STORAGE_KEY);
-    return getSystemData();
+function resetSystemData(user) {
+    const activeUser = user || (window.smartUpsAuth ? window.smartUpsAuth.getCurrentUser() : null);
+    const id = activeUser ? activeUser.id : 'guest';
+    localStorage.removeItem(`${STORAGE_KEY}_${id}`);
+    return getSystemData(activeUser);
 }

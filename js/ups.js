@@ -12,6 +12,12 @@ class SmartUpsEngine {
 
         this.initAudio();
         this.startSimulationLoop();
+
+        // Listen for user login/logout to switch user device storage immediately
+        window.addEventListener('smartups:auth-changed', (e) => {
+            this.data = getSystemData(e.detail ? e.detail.user : null);
+            this.notifyUpdate();
+        });
     }
 
     // Web Audio API Relay & Alert Synthesizer (no external audio files needed)
@@ -456,11 +462,8 @@ class SmartUpsEngine {
         this.notifyUpdate();
     }
 
-    // Delete a device (Admin only)
+    // Delete a device from user's account
     deleteDevice(type, id) {
-        if (!window.smartUpsAuth.isAdmin()) {
-            return { success: false, message: "Admin privileges required to remove hardware nodes." };
-        }
         if (type === 'switch') {
             this.data.switches = this.data.switches.filter(s => s.id !== id);
         } else if (type === 'outlet') {

@@ -58,8 +58,8 @@ class PairingManager {
     }
 
     open() {
-        if (!window.smartUpsAuth.canPair()) {
-            window.showToast("Admin access required to enroll and pair new smart hardware.", "warning");
+        if (!window.smartUpsAuth.isAuthenticated()) {
+            window.showToast("Please sign in to enroll and pair smart hardware.", "warning");
             return;
         }
 
@@ -70,6 +70,13 @@ class PairingManager {
         this.renderStep(1);
         this.modal.classList.remove('hidden');
         this.modal.classList.add('flex');
+    }
+
+    openForType(type) {
+        this.open();
+        if (type) {
+            this.selectDeviceType(type);
+        }
     }
 
     close() {

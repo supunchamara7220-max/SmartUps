@@ -469,6 +469,25 @@ function renderSwitchesList(switches) {
     const container = document.getElementById('switchesListContainer');
     if (!container) return;
 
+    if (!switches || switches.length === 0) {
+        container.innerHTML = `
+            <div class="col-span-full py-10 px-6 rounded-2xl border border-dashed border-cyan-500/30 bg-slate-950/40 text-center space-y-3 animate-fade-in">
+                <div class="w-14 h-14 mx-auto rounded-2xl bg-cyan-950/60 border border-cyan-500/40 flex items-center justify-center text-2xl text-cyan-400">⚡</div>
+                <div>
+                    <h4 class="text-sm font-bold text-white tracking-wide">No Smart Switches Paired</h4>
+                    <p class="text-xs text-slate-400 max-w-md mx-auto mt-1">Your account starts with a clean power topology. You have full freedom to enroll switches, breakers, and high-load relays as you wish!</p>
+                </div>
+                <button type="button" class="btn-pair-switch-empty px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-bold text-xs shadow-lg shadow-cyan-500/20 transition-all cursor-pointer">
+                    ＋ Pair Your First Smart Switch
+                </button>
+            </div>
+        `;
+        container.querySelector('.btn-pair-switch-empty')?.addEventListener('click', () => {
+            window.smartUpsPairing.openForType('switch');
+        });
+        return;
+    }
+
     // Check if user has filter active
     const activeFilter = document.querySelector('.btn-switch-filter.active')?.dataset.filter || 'all';
 
@@ -512,14 +531,21 @@ function renderSwitchesList(switches) {
                         </div>
                     </div>
 
-                    <!-- Lock Toggle for Admin -->
-                    ${isAdmin ? `
-                        <button class="btn-toggle-lock p-1.5 rounded-lg text-xs transition-colors ${
-                            sw.locked ? 'text-amber-400 bg-amber-950/40 border border-amber-500/30 hover:bg-amber-900/50' : 'text-gray-500 hover:text-gray-300'
-                        }" data-id="${sw.id}" title="${sw.locked ? 'Locked: Click to unlock' : 'Unlocked: Click to lock'}">
-                            ${sw.locked ? '🔒' : '🔓'}
+                    <div class="flex items-center gap-1">
+                        <!-- Lock Toggle for Admin -->
+                        ${isAdmin ? `
+                            <button class="btn-toggle-lock p-1.5 rounded-lg text-xs transition-colors ${
+                                sw.locked ? 'text-amber-400 bg-amber-950/40 border border-amber-500/30 hover:bg-amber-900/50' : 'text-gray-500 hover:text-gray-300'
+                            }" data-id="${sw.id}" title="${sw.locked ? 'Locked: Click to unlock' : 'Unlocked: Click to lock'}">
+                                ${sw.locked ? '🔒' : '🔓'}
+                            </button>
+                        ` : (sw.locked ? `<span class="text-xs text-amber-400" title="Safety Breaker Locked">🔒</span>` : '')}
+
+                        <!-- Remove Switch Button -->
+                        <button class="btn-delete-switch p-1 rounded-lg text-gray-500 hover:text-rose-400 text-xs transition-colors cursor-pointer" data-id="${sw.id}" title="Remove switch">
+                            ✕
                         </button>
-                    ` : (sw.locked ? `<span class="text-xs text-amber-400" title="Safety Breaker Locked">🔒</span>` : '')}
+                    </div>
                 </div>
 
                 <!-- Live Power & Status -->
@@ -566,6 +592,16 @@ function renderSwitchesList(switches) {
             }
         });
     });
+
+    container.querySelectorAll('.btn-delete-switch').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            if (confirm("Remove this switch from your dashboard?")) {
+                window.smartUpsEngine.deleteDevice('switch', id);
+                window.showToast("Switch removed from dashboard.", "info");
+            }
+        });
+    });
 }
 
 // -------------------------------------------------------------
@@ -575,9 +611,27 @@ function renderOutletsList(outlets) {
     const container = document.getElementById('outletsListContainer');
     if (!container) return;
 
+    if (!outlets || outlets.length === 0) {
+        container.innerHTML = `
+            <div class="col-span-full py-10 px-6 rounded-2xl border border-dashed border-emerald-500/30 bg-slate-950/40 text-center space-y-3 animate-fade-in">
+                <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-center text-2xl text-emerald-400">🔌</div>
+                <div>
+                    <h4 class="text-sm font-bold text-white tracking-wide">No Smart Socket Outlets Paired</h4>
+                    <p class="text-xs text-slate-400 max-w-md mx-auto mt-1">No socket outlets configured yet. Add dual-port sockets, smart plugs, or appliances as you wish!</p>
+                </div>
+                <button type="button" class="btn-pair-outlet-empty px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black font-bold text-xs shadow-lg shadow-emerald-500/20 transition-all cursor-pointer">
+                    ＋ Pair Your First Smart Socket
+                </button>
+            </div>
+        `;
+        container.querySelector('.btn-pair-outlet-empty')?.addEventListener('click', () => {
+            window.smartUpsPairing.openForType('outlet');
+        });
+        return;
+    }
+
     container.innerHTML = outlets.map(sock => {
         const canToggle = window.smartUpsAuth.canToggle();
-        const isAdmin = window.smartUpsAuth.isAdmin();
 
         const priorityBadge = {
             critical: "bg-rose-950/60 text-rose-300 border-rose-500/40",
@@ -644,18 +698,16 @@ function renderOutletsList(outlets) {
                     </div>
                 </div>
 
-                <!-- Bottom Bar with Timer & Admin options -->
+                <!-- Bottom Bar with Timer & Remove options -->
                 <div class="flex items-center justify-between text-xs text-gray-400 pt-1">
                     <div class="flex items-center gap-1.5">
                         <span>⏱️</span>
                         <span>${sock.timerMinutesRemaining ? `${Math.ceil(sock.timerMinutesRemaining)}m timer` : sock.schedule}</span>
                     </div>
 
-                    ${isAdmin ? `
-                        <button class="btn-delete-socket text-[11px] text-gray-500 hover:text-rose-400 transition-colors cursor-pointer" data-id="${sock.id}" title="Remove socket node">
-                            Remove
-                        </button>
-                    ` : ''}
+                    <button class="btn-delete-socket text-[11px] text-gray-500 hover:text-rose-400 transition-colors cursor-pointer" data-id="${sock.id}" title="Remove socket node">
+                        Remove
+                    </button>
                 </div>
             </div>
         `;
@@ -675,9 +727,9 @@ function renderOutletsList(outlets) {
     container.querySelectorAll('.btn-delete-socket').forEach(btn => {
         btn.addEventListener('click', () => {
             const id = btn.dataset.id;
-            if (confirm("Are you sure you want to decommission this smart outlet node?")) {
+            if (confirm("Remove this smart outlet from your dashboard?")) {
                 window.smartUpsEngine.deleteDevice('outlet', id);
-                window.showToast("Socket outlet decommissioned.", "info");
+                window.showToast("Socket outlet removed from dashboard.", "info");
             }
         });
     });
