@@ -104,6 +104,7 @@ class PairingManager {
 
     close() {
         if (this.scanTimer) clearTimeout(this.scanTimer);
+        if (this.stageTimer) clearTimeout(this.stageTimer);
         if (this.handshakeInterval) clearInterval(this.handshakeInterval);
         this.modal.classList.add('hidden');
         this.modal.classList.remove('flex');
@@ -289,6 +290,11 @@ class PairingManager {
     }
 
     startHandshake(device) {
+        if (this.stageTimer) {
+            clearTimeout(this.stageTimer);
+            this.stageTimer = null;
+        }
+
         this.selectedCatalogItem = device;
         this.renderStep(3);
 
@@ -309,8 +315,8 @@ class PairingManager {
 
         if (stageList) {
             stageList.innerHTML = stages.map((s, idx) => `
-                <li id="stage_item_${idx}" class="flex items-center gap-3 text-sm text-gray-500 transition-colors duration-300">
-                    <span class="w-5 h-5 rounded-full border border-gray-700 flex items-center justify-center text-xs stage-icon font-mono">
+                <li id="stage_item_${idx}" class="flex items-center gap-3 text-sm text-slate-400 transition-colors duration-300">
+                    <span class="stage-icon w-5 h-5 rounded-full border border-slate-700 flex items-center justify-center text-xs font-mono">
                         ${idx + 1}
                     </span>
                     <span class="stage-text">${s.text}</span>
@@ -318,56 +324,57 @@ class PairingManager {
             `).join('');
         }
 
-        let currentProgress = 5;
-        let activeStageIndex = 0;
-
         const updateStageUI = (index) => {
             const item = document.getElementById(`stage_item_${index}`);
             if (item) {
-                item.classList.remove('text-gray-500');
+                item.classList.remove('text-slate-400', 'text-gray-500');
                 item.classList.add('text-cyan-300', 'font-medium');
-                const icon = item.querySelector('.stage-icon');
-                icon.className = "w-5 h-5 rounded-full bg-cyan-500 text-black flex items-center justify-center text-xs font-bold animate-pulse";
-                icon.innerHTML = "•";
+                const icon = item.querySelector('.stage-icon') || item.firstElementChild;
+                if (icon) {
+                    icon.className = "stage-icon w-5 h-5 rounded-full bg-cyan-500 text-black flex items-center justify-center text-xs font-bold animate-pulse font-mono";
+                    icon.innerHTML = "•";
+                }
             }
         };
 
         const markStageComplete = (index) => {
             const item = document.getElementById(`stage_item_${index}`);
             if (item) {
-                item.classList.remove('text-cyan-300', 'font-medium');
+                item.classList.remove('text-cyan-300', 'font-medium', 'text-slate-400');
                 item.classList.add('text-emerald-400');
-                const icon = item.querySelector('.stage-icon');
-                icon.className = "w-5 h-5 rounded-full bg-emerald-500 text-black flex items-center justify-center text-xs font-bold";
-                icon.innerHTML = "✓";
+                const icon = item.querySelector('.stage-icon') || item.firstElementChild;
+                if (icon) {
+                    icon.className = "stage-icon w-5 h-5 rounded-full bg-emerald-500 text-black flex items-center justify-center text-xs font-bold font-mono";
+                    icon.innerHTML = "✓";
+                }
             }
         };
 
-        updateStageUI(0);
         if (window.smartUpsEngine) {
             window.smartUpsEngine.playBeep(650, 0.1);
         }
 
         const runStage = (idx) => {
+            if (this.currentStep !== 3) return;
+
             if (idx >= stages.length) {
                 if (progressBar) progressBar.style.width = '100%';
                 if (window.smartUpsEngine) {
                     window.smartUpsEngine.playChime();
                 }
-                setTimeout(() => {
+                this.stageTimer = setTimeout(() => {
                     this.prepareConfigurationStep();
                 }, 600);
                 return;
             }
 
-            activeStageIndex = idx;
             updateStageUI(idx);
 
             const percentPerStage = 95 / stages.length;
-            currentProgress = Math.min(95, Math.round((idx + 1) * percentPerStage));
+            const currentProgress = Math.min(95, Math.round((idx + 1) * percentPerStage));
             if (progressBar) progressBar.style.width = `${currentProgress}%`;
 
-            setTimeout(() => {
+            this.stageTimer = setTimeout(() => {
                 markStageComplete(idx);
                 if (window.smartUpsEngine) {
                     window.smartUpsEngine.playBeep(880 + (idx * 150), 0.08);
@@ -397,6 +404,7 @@ class PairingManager {
     }
 
     finalizePairing() {
+        if (!this.selectedCatalogItem) return;
         const name = document.getElementById('cfgDeviceName')?.value || this.selectedCatalogItem.name;
         const room = document.getElementById('cfgRoomName')?.value || "Control Lab";
         const priority = document.getElementById('cfgPriority')?.value || "essential";
