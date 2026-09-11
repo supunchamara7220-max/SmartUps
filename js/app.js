@@ -260,12 +260,24 @@ function updateAuthUI() {
     if (user) {
         if (userName) userName.textContent = user.name;
         if (userRole) {
-            userRole.textContent = user.role.toUpperCase();
-            userRole.className = `text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider font-mono ${
-                user.role === 'admin' ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30' :
-                user.role === 'operator' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
-                'bg-gray-700 text-gray-300'
-            }`;
+            const roleLabels = {
+                energy_engineer: "ENERGY ENGINEER",
+                business_owner: "BUSINESS OWNER",
+                household_resident: "HOUSEHOLD RESIDENT",
+                office_worker: "OFFICE WORKER",
+                student: "STUDENT",
+                admin: "ADMINISTRATOR"
+            };
+            const roleClasses = {
+                energy_engineer: "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40",
+                business_owner: "bg-amber-500/20 text-amber-300 border border-amber-500/40",
+                household_resident: "bg-teal-500/20 text-teal-300 border border-teal-500/40",
+                office_worker: "bg-blue-500/20 text-blue-300 border border-blue-500/40",
+                student: "bg-purple-500/20 text-purple-300 border border-purple-500/40",
+                admin: "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+            };
+            userRole.textContent = roleLabels[user.role] || (user.role || '').toUpperCase();
+            userRole.className = `text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider font-mono ${roleClasses[user.role] || 'bg-gray-700 text-gray-300'}`;
         }
         if (userAvatar) userAvatar.textContent = user.avatar || "⚡";
     }

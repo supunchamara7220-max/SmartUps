@@ -75,7 +75,7 @@ class AuthManager {
         return { success: false, message: `Account with role ${role} not found.` };
     }
 
-    register(name, email, password, role = "operator") {
+    register(name, email, password, role = "household_resident") {
         const users = this.getAllUsers();
         const normalizedEmail = email.trim().toLowerCase();
 
@@ -87,17 +87,61 @@ class AuthManager {
             return { success: false, message: "Password must be at least 4 characters long." };
         }
 
+        const roleMeta = {
+            energy_engineer: {
+                avatar: "⚡",
+                title: "Energy Sector Engineer",
+                canPair: true,
+                canConfigure: true,
+                canToggle: true
+            },
+            business_owner: {
+                avatar: "🏢",
+                title: "Small Business Owner",
+                canPair: true,
+                canConfigure: true,
+                canToggle: true
+            },
+            household_resident: {
+                avatar: "🏡",
+                title: "Household Resident",
+                canPair: true,
+                canConfigure: false,
+                canToggle: true
+            },
+            office_worker: {
+                avatar: "💼",
+                title: "Office Worker",
+                canPair: false,
+                canConfigure: false,
+                canToggle: true
+            },
+            student: {
+                avatar: "🎓",
+                title: "Student / Researcher",
+                canPair: true,
+                canConfigure: false,
+                canToggle: true
+            }
+        }[role] || {
+            avatar: "👤",
+            title: "SmartUps User",
+            canPair: false,
+            canConfigure: false,
+            canToggle: true
+        };
+
         const newUser = {
             id: "usr_" + Date.now().toString(36),
             name: name.trim(),
             email: normalizedEmail,
             password: password,
             role: role,
-            avatar: role === "admin" ? "⚡" : (role === "operator" ? "🛡️" : "👤"),
-            title: role === "admin" ? "System Administrator" : (role === "operator" ? "Power Controller" : "Guest Operator"),
-            canPair: role === "admin",
-            canConfigure: role === "admin",
-            canToggle: role !== "viewer"
+            avatar: roleMeta.avatar,
+            title: roleMeta.title,
+            canPair: roleMeta.canPair,
+            canConfigure: roleMeta.canConfigure,
+            canToggle: roleMeta.canToggle
         };
 
         users.push(newUser);
@@ -126,15 +170,19 @@ class AuthManager {
     }
 
     isAdmin() {
-        return this.currentUser && this.currentUser.role === 'admin';
+        if (!this.currentUser) return false;
+        const r = this.currentUser.role;
+        return r === 'energy_engineer' || r === 'business_owner' || r === 'admin';
     }
 
     canToggle() {
-        return this.currentUser && (this.currentUser.role === 'admin' || this.currentUser.role === 'operator');
+        if (!this.currentUser) return false;
+        return !!this.currentUser.canToggle;
     }
 
     canPair() {
-        return this.currentUser && this.currentUser.role === 'admin';
+        if (!this.currentUser) return false;
+        return !!this.currentUser.canPair;
     }
 
     emitAuthChange() {

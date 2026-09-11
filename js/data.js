@@ -235,43 +235,79 @@ const DEFAULT_SYSTEM_DATA = {
     ]
 };
 
-// Demo user accounts
+// Demo user accounts with the 5 dedicated roles
 const DEMO_USERS = [
     {
-        id: "usr_admin",
-        name: "Supreme Administrator",
-        email: "admin@smartups.io",
-        password: "admin123",
-        role: "admin", // "admin", "operator", "viewer"
+        id: "usr_engineer",
+        name: "Alex Rivera",
+        email: "engineer@smartups.io",
+        password: "engineer123",
+        role: "energy_engineer",
         avatar: "⚡",
-        title: "UPS Chief Systems Engineer",
+        title: "Energy Sector Engineer",
         canPair: true,
         canConfigure: true,
         canToggle: true
     },
     {
-        id: "usr_operator",
-        name: "Operations Manager",
-        email: "operator@smartups.io",
-        password: "power456",
-        role: "operator",
-        avatar: "🛡️",
-        title: "Facilities Power Tech",
+        id: "usr_business",
+        name: "Sarah Chen",
+        email: "business@smartups.io",
+        password: "business123",
+        role: "business_owner",
+        avatar: "🏢",
+        title: "Small Business Owner",
+        canPair: true,
+        canConfigure: true,
+        canToggle: true
+    },
+    {
+        id: "usr_resident",
+        name: "David Miller",
+        email: "resident@smartups.io",
+        password: "resident123",
+        role: "household_resident",
+        avatar: "🏡",
+        title: "Household Resident",
+        canPair: true,
+        canConfigure: false,
+        canToggle: true
+    },
+    {
+        id: "usr_office",
+        name: "Emma Watson",
+        email: "office@smartups.io",
+        password: "office123",
+        role: "office_worker",
+        avatar: "💼",
+        title: "Office Worker",
         canPair: false,
         canConfigure: false,
         canToggle: true
     },
     {
-        id: "usr_viewer",
-        name: "Guest Demo User",
-        email: "demo@smartups.io",
-        password: "demo",
-        role: "viewer",
-        avatar: "👁️",
-        title: "Auditor / Observer",
-        canPair: false,
+        id: "usr_student",
+        name: "Liam Patel",
+        email: "student@smartups.io",
+        password: "student123",
+        role: "student",
+        avatar: "🎓",
+        title: "Engineering Student",
+        canPair: true,
         canConfigure: false,
-        canToggle: false
+        canToggle: true
+    },
+    {
+        id: "usr_admin",
+        name: "System Administrator",
+        email: "admin@smartups.io",
+        password: "admin123",
+        role: "energy_engineer",
+        avatar: "⚡",
+        title: "Energy Sector Engineer (Admin)",
+        canPair: true,
+        canConfigure: true,
+        canToggle: true
     }
 ];
 
