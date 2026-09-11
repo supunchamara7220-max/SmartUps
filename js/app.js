@@ -268,24 +268,6 @@ function setupAuthListeners() {
         });
     }
 
-    // Clear Cache buttons
-    const btnGateClearCache = document.getElementById('btnGateClearCache');
-    if (btnGateClearCache) {
-        btnGateClearCache.addEventListener('click', () => {
-            if (window.clearSmartUpsCache) {
-                window.clearSmartUpsCache(false);
-            }
-        });
-    }
-
-    const btnModalClearCache = document.getElementById('btnModalClearCache');
-    if (btnModalClearCache) {
-        btnModalClearCache.addEventListener('click', () => {
-            if (window.clearSmartUpsCache) {
-                window.clearSmartUpsCache(false);
-            }
-        });
-    }
 }
 
 function updateAuthUI() {
