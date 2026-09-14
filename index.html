@@ -162,7 +162,7 @@
                         <span class="font-extrabold text-lg sm:text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-teal-300 to-white whitespace-nowrap">
                             SmartUps<span class="text-cyan-400">.io</span>
                         </span>
-                        <span class="text-[9px] px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-500/30 font-mono font-semibold">PRO v4.2.2</span>
+                        <span class="text-[9px] px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-500/30 font-mono font-semibold">PRO v4.2</span>
                     </div>
                     <div class="text-[10px] sm:text-[11px] text-slate-400 flex items-center gap-1.5 font-mono">
                         <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-sm shadow-emerald-400/50 animate-pulse"></span>
@@ -171,11 +171,17 @@
                 </div>
             </div>
 
-            <!-- Central Control: Blackout Simulator, Check Alert & Audio -->
+            <!-- Central Control: Blackout Simulator, 30% Alarm Controls & Audio -->
             <div class="hidden md:flex items-center gap-2 lg:gap-2.5 shrink-0">
                 <button id="btnSimulateBlackout" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-black font-bold text-xs shadow-md shadow-amber-500/20 transition-all active:scale-95 cursor-pointer whitespace-nowrap">
                     <span>⚡</span>
                     <span>SIMULATE POWER OUTAGE</span>
+                </button>
+                
+                <!-- 30% Battery Alarm Toggle Button -->
+                <button id="btnToggle30Alarm" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-950/40 hover:bg-amber-900/50 text-amber-300 border border-amber-500/50 text-xs font-semibold transition-all cursor-pointer shadow-sm shadow-amber-500/10 whitespace-nowrap" title="Click to Toggle 30% Battery Critical Alarm ON/MUTED">
+                    <span id="dot30AlarmStatus" class="w-2 h-2 rounded-full bg-amber-400 inline-block shadow-sm shadow-amber-400/80 animate-pulse"></span>
+                    <span id="label30AlarmStatus">30% Alarm: ON</span>
                 </button>
 
                 <!-- Check / Test Alert Button -->
@@ -209,13 +215,17 @@
         </div>
     </header>
 
-    <!-- Mobile Quick Bar (Simulator, Check Alert & Status) -->
+    <!-- Mobile Quick Bar (Simulator, 30% Alarm & Sound) -->
     <div class="md:hidden flex items-center justify-between px-4 py-2.5 bg-slate-900/80 border-b border-slate-800 text-xs">
         <button id="btnSimulateBlackoutMobile" onclick="document.getElementById('btnSimulateBlackout').click()" class="font-bold text-amber-400 flex items-center gap-1">
             <span>⚡</span> Outage
         </button>
+        <button id="btnToggle30AlarmMobile" class="font-bold text-amber-300 flex items-center gap-1 cursor-pointer">
+            <span id="dot30AlarmStatusMobile" class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block animate-pulse"></span>
+            <span id="label30AlarmStatusMobile">Alarm: ON</span>
+        </button>
         <button id="btnTest30AlertMobile" class="font-bold text-cyan-400 flex items-center gap-1 cursor-pointer">
-            <span>🔔</span> Check Alert
+            <span>🔔</span> Check
         </button>
         <span id="upsStatusBadge" class="text-[11px] text-emerald-400 font-mono">ONLINE</span>
     </div>
@@ -647,12 +657,12 @@
                             <label class="block text-xs font-semibold text-slate-300 mb-1">Room / Zone</label>
                             <input type="text" id="cfgRoomName" list="roomSuggestions" placeholder="e.g. Server Room, Living Room" value="Server Room" required class="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-white text-sm focus:border-cyan-400 focus:outline-none">
                             <datalist id="roomSuggestions">
-                                <option value="Server Room"></option>
-                                <option value="Control Lab"></option>
-                                <option value="Telecom Closet"></option>
-                                <option value="Fabrication Lab"></option>
-                                <option value="Main Office"></option>
-                                <option value="Living Room"></option>
+                                <option value="Server Room">
+                                <option value="Control Lab">
+                                <option value="Telecom Closet">
+                                <option value="Fabrication Lab">
+                                <option value="Main Office">
+                                <option value="Living Room">
                             </datalist>
                         </div>
 
@@ -804,7 +814,7 @@
                             <h3 class="font-extrabold text-base text-white tracking-wide">30% Battery Reserve Alert</h3>
                             <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono font-bold animate-pulse">CRITICAL</span>
                         </div>
-                        <p class="text-xs text-slate-400 mt-0.5 font-mono">Select 2 critical devices to KEEP running. All other circuits will be cut to save reserve.</p>
+                        <p class="text-xs text-slate-400 mt-0.5 font-mono">Select 2 active devices below to disconnect immediately and save battery</p>
                     </div>
                 </div>
                 <button id="btnCloseBatteryAlert" class="text-slate-400 hover:text-white text-lg p-1 font-bold cursor-pointer" title="Dismiss Alert">✕</button>
@@ -820,15 +830,15 @@
                         <strong class="text-amber-400 font-mono text-sm ml-1" id="alertModalBattLevel">30%</strong>
                     </div>
                     <div class="px-2.5 py-1 rounded-lg bg-slate-900 text-[11px] font-mono font-bold border border-slate-700">
-                        <span class="text-cyan-400" id="alertSelectedCount">0</span> / <span id="alertTargetCount">2</span> to keep
+                        <span class="text-cyan-400" id="alertSelectedCount">0</span> / <span id="alertTargetCount">2</span> selected
                     </div>
                 </div>
 
                 <!-- Active Devices List -->
                 <div class="space-y-2">
                     <div class="flex items-center justify-between text-xs text-slate-400 font-mono px-1">
-                        <span>ACTIVE CIRCUITS:</span>
-                        <span class="text-[11px] text-cyan-400 font-semibold">Select 2 devices to KEEP powered ⚡</span>
+                        <span>ACTIVE DEVICES DRAWING POWER:</span>
+                        <span class="text-[11px] text-slate-500">Tap 2 devices to shed</span>
                     </div>
 
                     <div id="batteryAlertDevicesList" class="space-y-2 max-h-56 overflow-y-auto pr-1">
@@ -850,7 +860,7 @@
                 </button>
                 <button type="button" id="btnConfirmBatteryShed" disabled class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-600 border border-slate-700 text-xs font-bold transition-all cursor-not-allowed flex items-center gap-2 shadow-md">
                     <span>⚡</span>
-                    <span id="btnConfirmBatteryShedText">Select 2 Devices to Keep</span>
+                    <span id="btnConfirmBatteryShedText">Select 2 Devices to Shed</span>
                 </button>
             </div>
         </div>
