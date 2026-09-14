@@ -209,36 +209,7 @@ function setupAuthListeners() {
         });
     }
 
-    // Modal Tabs
-    const tabProfile = document.getElementById('tabAuthProfile');
-    const tabLogin = document.getElementById('tabAuthLogin');
-    const tabRegister = document.getElementById('tabAuthRegister');
-
-    if (tabProfile) {
-        tabProfile.addEventListener('click', () => switchAuthTab('profile'));
-    }
-    if (tabLogin) {
-        tabLogin.addEventListener('click', () => switchAuthTab('login'));
-    }
-    if (tabRegister) {
-        tabRegister.addEventListener('click', () => switchAuthTab('register'));
-    }
-
-    const btnBackLogin = document.getElementById('btnBackToProfileFromLogin');
-    if (btnBackLogin) {
-        btnBackLogin.addEventListener('click', () => switchAuthTab('profile'));
-    }
-
-    const btnBackReg = document.getElementById('btnBackToProfileFromReg');
-    if (btnBackReg) {
-        btnBackReg.addEventListener('click', () => switchAuthTab('profile'));
-    }
-
-    const btnSwitchAccountFromProfile = document.getElementById('btnSwitchAccountFromProfile');
-    if (btnSwitchAccountFromProfile) {
-        btnSwitchAccountFromProfile.addEventListener('click', () => switchAuthTab('login'));
-    }
-
+    // Profile Modal Close and Logout buttons
     const btnLogoutProfile = document.getElementById('btnLogoutProfile');
     if (btnLogoutProfile) {
         btnLogoutProfile.addEventListener('click', () => {
@@ -248,13 +219,10 @@ function setupAuthListeners() {
         });
     }
 
-    // Logout button in switch account form
-    const btnLogout = document.getElementById('btnLogout');
-    if (btnLogout) {
-        btnLogout.addEventListener('click', () => {
-            window.smartUpsAuth.logout();
+    const btnCloseProfileBottom = document.getElementById('btnCloseProfileBottom');
+    if (btnCloseProfileBottom) {
+        btnCloseProfileBottom.addEventListener('click', () => {
             closeLoginModal();
-            window.showToast("Signed out. Authentication required to access system.", "info");
         });
     }
 }
@@ -264,67 +232,9 @@ function openProfileModal() {
     if (!modalAuth) return;
 
     renderProfileView();
-    switchAuthTab('profile');
 
     modalAuth.classList.remove('hidden');
     modalAuth.classList.add('flex');
-}
-
-function switchAuthTab(tabName) {
-    const tabProfile = document.getElementById('tabAuthProfile');
-    const tabLogin = document.getElementById('tabAuthLogin');
-    const tabRegister = document.getElementById('tabAuthRegister');
-
-    const boxProfile = document.getElementById('authProfileBox');
-    const boxLogin = document.getElementById('authLoginBox');
-    const boxRegister = document.getElementById('authRegisterBox');
-
-    const titleIcon = document.getElementById('authModalTitleIcon');
-    const titleText = document.getElementById('authModalTitleText');
-    const subtitle = document.getElementById('authModalSubtitle');
-
-    const activeClasses = ['text-cyan-400', 'border-cyan-400'];
-    const inactiveClasses = ['text-slate-400', 'border-transparent'];
-
-    [tabProfile, tabLogin, tabRegister].forEach(t => {
-        if (!t) return;
-        t.classList.remove(...activeClasses);
-        t.classList.add(...inactiveClasses);
-    });
-
-    if (boxProfile) boxProfile.classList.add('hidden');
-    if (boxLogin) boxLogin.classList.add('hidden');
-    if (boxRegister) boxRegister.classList.add('hidden');
-
-    if (tabName === 'profile') {
-        if (tabProfile) {
-            tabProfile.classList.add(...activeClasses);
-            tabProfile.classList.remove(...inactiveClasses);
-        }
-        if (boxProfile) boxProfile.classList.remove('hidden');
-        if (titleIcon) titleIcon.textContent = '👤';
-        if (titleText) titleText.textContent = 'User Profile';
-        if (subtitle) subtitle.textContent = 'Active session credentials & role permissions';
-        renderProfileView();
-    } else if (tabName === 'login') {
-        if (tabLogin) {
-            tabLogin.classList.add(...activeClasses);
-            tabLogin.classList.remove(...inactiveClasses);
-        }
-        if (boxLogin) boxLogin.classList.remove('hidden');
-        if (titleIcon) titleIcon.textContent = '🔐';
-        if (titleText) titleText.textContent = 'Switch Account';
-        if (subtitle) subtitle.textContent = 'Sign in with credentials or demo profiles';
-    } else if (tabName === 'register') {
-        if (tabRegister) {
-            tabRegister.classList.add(...activeClasses);
-            tabRegister.classList.remove(...inactiveClasses);
-        }
-        if (boxRegister) boxRegister.classList.remove('hidden');
-        if (titleIcon) titleIcon.textContent = '✨';
-        if (titleText) titleText.textContent = 'Register New Account';
-        if (subtitle) subtitle.textContent = 'Create a custom household or business profile';
-    }
 }
 
 function renderProfileView() {
