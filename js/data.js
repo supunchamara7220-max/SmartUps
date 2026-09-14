@@ -110,7 +110,7 @@ const DEFAULT_SYSTEM_DATA = {
     // UPS Core System Stats
     ups: {
         model: "SmartUps Pro Ultra 3000VA",
-        firmware: "v4.2.1-PRO",
+        firmware: "v4.3.0-PRO",
         serialNumber: "SU-2026-98174X",
         status: "online", // "online" (grid), "battery", "bypass", "fault"
         gridVoltage: 230.0, // Volts
@@ -145,7 +145,7 @@ const DEFAULT_SYSTEM_DATA = {
 const ADMIN_SYSTEM_DATA = {
     ups: {
         model: "SmartUps Pro Ultra 3000VA",
-        firmware: "v4.2.1-PRO",
+        firmware: "v4.3.0-PRO",
         serialNumber: "SU-2026-98174X",
         status: "online",
         gridVoltage: 231.4,
