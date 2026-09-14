@@ -1006,7 +1006,7 @@ function setupSimulatorControls() {
     if (btnSound) {
         btnSound.addEventListener('click', () => {
             const enabled = window.smartUpsEngine.toggleSound();
-            btnSound.textContent = enabled ? '🔊 Audio ON' : '🔇 Audio Muted';
+            btnSound.innerHTML = enabled ? '<span>🔊</span><span>Audio ON</span>' : '<span>🔇</span><span>Audio Muted</span>';
             window.showToast(enabled ? "Relay & alarm audio enabled." : "Audio muted.", "info");
         });
     }

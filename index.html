@@ -147,68 +147,68 @@
     <div id="appDashboard" class="hidden">
 
     <!-- Top Navigation Header -->
-    <header class="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-xl shadow-xl shadow-black/30">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-7 min-h-[96px] flex items-center justify-between gap-6">
+    <header class="sticky top-0 z-40 border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-xl shadow-lg shadow-black/20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 sm:h-20 flex items-center justify-between gap-3">
             
             <!-- Logo & Brand -->
-            <div class="flex items-center gap-4">
-                <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-600 to-blue-500 p-0.5 shadow-xl shadow-cyan-500/25 flex-shrink-0">
-                    <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center text-cyan-400 font-black text-3xl">
+            <div class="flex items-center gap-3 shrink-0">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-600 to-blue-500 p-0.5 shadow-md shadow-cyan-500/20 flex-shrink-0">
+                    <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center text-cyan-400 font-black text-xl">
                         ⚡
                     </div>
                 </div>
                 <div>
-                    <div class="flex items-center gap-2.5">
-                        <span class="font-black text-2xl sm:text-3xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-teal-300 to-white">
+                    <div class="flex items-center gap-2">
+                        <span class="font-extrabold text-lg sm:text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-teal-300 to-white whitespace-nowrap">
                             SmartUps<span class="text-cyan-400">.io</span>
                         </span>
-                        <span class="text-[11px] px-2.5 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-500/30 font-mono font-semibold">PRO v4.2</span>
+                        <span class="text-[9px] px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-500/30 font-mono font-semibold">PRO v4.2</span>
                     </div>
-                    <div class="text-xs sm:text-sm text-slate-400 flex items-center gap-2 font-mono mt-1">
-                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block shadow-sm shadow-emerald-400/50 animate-pulse"></span>
-                        <span id="upsStatusText" class="font-medium">GRID ONLINE • PURE SINE</span>
+                    <div class="text-[10px] sm:text-[11px] text-slate-400 flex items-center gap-1.5 font-mono">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block shadow-sm shadow-emerald-400/50 animate-pulse"></span>
+                        <span id="upsStatusText" class="whitespace-nowrap">GRID ONLINE • PURE SINE</span>
                     </div>
                 </div>
             </div>
 
             <!-- Central Control: Blackout Simulator, 30% Alarm Controls & Audio -->
-            <div class="hidden md:flex items-center gap-3">
-                <button id="btnSimulateBlackout" class="flex items-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-black font-bold text-xs sm:text-sm shadow-lg shadow-amber-500/20 transition-all active:scale-95 cursor-pointer">
+            <div class="hidden md:flex items-center gap-2 lg:gap-2.5 shrink-0">
+                <button id="btnSimulateBlackout" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-black font-bold text-xs shadow-md shadow-amber-500/20 transition-all active:scale-95 cursor-pointer whitespace-nowrap">
                     <span>⚡</span>
                     <span>SIMULATE POWER OUTAGE</span>
                 </button>
                 
                 <!-- 30% Battery Alarm Toggle Button -->
-                <button id="btnToggle30Alarm" class="flex items-center gap-2 px-3.5 py-3 rounded-xl bg-amber-950/40 hover:bg-amber-900/50 text-amber-300 border border-amber-500/50 text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-sm shadow-amber-500/10" title="Click to Toggle 30% Battery Critical Alarm ON/MUTED">
+                <button id="btnToggle30Alarm" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-amber-950/40 hover:bg-amber-900/50 text-amber-300 border border-amber-500/50 text-xs font-semibold transition-all cursor-pointer shadow-sm shadow-amber-500/10 whitespace-nowrap" title="Click to Toggle 30% Battery Critical Alarm ON/MUTED">
                     <span id="dot30AlarmStatus" class="w-2 h-2 rounded-full bg-amber-400 inline-block shadow-sm shadow-amber-400/80 animate-pulse"></span>
                     <span id="label30AlarmStatus">30% Alarm: ON</span>
                 </button>
 
                 <!-- Check / Test Alert Button -->
-                <button id="btnTest30Alert" class="px-3.5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-cyan-400 border border-cyan-500/40 text-xs sm:text-sm font-semibold transition-colors cursor-pointer flex items-center gap-1.5" title="Check & Test 30% Battery Alarm Popup, Sound & Web Notification">
+                <button id="btnTest30Alert" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-cyan-400 border border-cyan-500/40 text-xs font-semibold transition-colors cursor-pointer whitespace-nowrap" title="Check & Test 30% Battery Alarm Popup, Sound & Web Notification">
                     <span>🔔</span>
                     <span>Check Alert</span>
                 </button>
 
-                <button id="btnToggleSound" class="px-3.5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/60 text-xs sm:text-sm font-medium transition-colors cursor-pointer">
-                    🔊 Audio ON
+                <button id="btnToggleSound" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/60 text-xs font-medium transition-colors cursor-pointer whitespace-nowrap">
+                    <span>🔊</span>
+                    <span>Audio ON</span>
                 </button>
             </div>
 
             <!-- Right Controls: Pair Device & User Profile -->
-            <div class="flex items-center gap-3.5">
-                <button id="btnOpenPairing" class="flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-bold text-xs sm:text-sm shadow-md shadow-cyan-500/20 transition-all active:scale-95 cursor-pointer">
+            <div class="flex items-center gap-2.5 shrink-0">
+                <button id="btnOpenPairing" class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-bold text-xs shadow-md shadow-cyan-500/20 transition-all active:scale-95 cursor-pointer whitespace-nowrap">
                     <span>＋</span>
-                    <span class="hidden sm:inline">Pair New Device</span>
-                    <span class="sm:hidden">Pair</span>
+                    <span>Pair Device</span>
                 </button>
 
                 <!-- User Profile Chip / Login Trigger -->
-                <button id="btnOpenAuth" class="flex items-center gap-3.5 px-4 py-2.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer">
-                    <span id="headerUserAvatar" class="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-lg">⚡</span>
+                <button id="btnOpenAuth" class="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-900/90 hover:bg-slate-800 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer">
+                    <span id="headerUserAvatar" class="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center text-sm">⚡</span>
                     <div class="text-left hidden sm:block">
-                        <div id="headerUserName" class="text-xs sm:text-sm font-semibold text-white leading-tight">Admin</div>
-                        <div id="headerUserRole" class="text-[10px] text-cyan-400 font-mono leading-none mt-1">ADMIN</div>
+                        <div id="headerUserName" class="text-xs font-semibold text-white leading-tight whitespace-nowrap">Admin</div>
+                        <div id="headerUserRole" class="text-[9px] text-cyan-400 font-mono leading-none">ADMIN</div>
                     </div>
                 </button>
             </div>
@@ -216,15 +216,15 @@
     </header>
 
     <!-- Mobile Quick Bar (Simulator, 30% Alarm & Sound) -->
-    <div class="md:hidden flex items-center justify-between px-3 py-3 bg-slate-900/70 border-b border-slate-800 gap-1">
-        <button id="btnSimulateBlackoutMobile" onclick="document.getElementById('btnSimulateBlackout').click()" class="text-xs font-bold text-amber-400 flex items-center gap-1">
+    <div class="md:hidden flex items-center justify-between px-4 py-2.5 bg-slate-900/80 border-b border-slate-800 text-xs">
+        <button id="btnSimulateBlackoutMobile" onclick="document.getElementById('btnSimulateBlackout').click()" class="font-bold text-amber-400 flex items-center gap-1">
             <span>⚡</span> Outage
         </button>
-        <button id="btnToggle30AlarmMobile" class="text-xs font-bold text-amber-300 flex items-center gap-1 cursor-pointer">
+        <button id="btnToggle30AlarmMobile" class="font-bold text-amber-300 flex items-center gap-1 cursor-pointer">
             <span id="dot30AlarmStatusMobile" class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block animate-pulse"></span>
             <span id="label30AlarmStatusMobile">Alarm: ON</span>
         </button>
-        <button id="btnTest30AlertMobile" class="text-xs font-bold text-cyan-400 flex items-center gap-1 cursor-pointer">
+        <button id="btnTest30AlertMobile" class="font-bold text-cyan-400 flex items-center gap-1 cursor-pointer">
             <span>🔔</span> Check
         </button>
         <span id="upsStatusBadge" class="text-[11px] text-emerald-400 font-mono">ONLINE</span>
