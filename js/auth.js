@@ -136,7 +136,11 @@ class AuthManager {
 
     quickLogin(role) {
         const users = this.getAllUsers();
-        const user = users.find(u => u.role === role);
+        const user = users.find(u => 
+            u.id === role || 
+            u.role === role || 
+            (role === 'admin' && (u.id === 'usr_admin' || u.role === 'admin' || (u.email || '').startsWith('admin')))
+        );
         if (user) {
             this.currentUser = user;
             this.saveSession();

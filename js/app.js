@@ -210,32 +210,45 @@ function setupAuthListeners() {
     }
 
     // Modal Tabs
+    const tabProfile = document.getElementById('tabAuthProfile');
     const tabLogin = document.getElementById('tabAuthLogin');
     const tabRegister = document.getElementById('tabAuthRegister');
-    const boxLogin = document.getElementById('authLoginBox');
-    const boxRegister = document.getElementById('authRegisterBox');
 
-    if (tabLogin && tabRegister) {
-        tabLogin.addEventListener('click', () => {
-            tabLogin.classList.add('text-cyan-400', 'border-cyan-400');
-            tabLogin.classList.remove('text-gray-400', 'border-transparent');
-            tabRegister.classList.remove('text-cyan-400', 'border-cyan-400');
-            tabRegister.classList.add('text-gray-400', 'border-transparent');
-            boxLogin.classList.remove('hidden');
-            boxRegister.classList.add('hidden');
-        });
+    if (tabProfile) {
+        tabProfile.addEventListener('click', () => switchAuthTab('profile'));
+    }
+    if (tabLogin) {
+        tabLogin.addEventListener('click', () => switchAuthTab('login'));
+    }
+    if (tabRegister) {
+        tabRegister.addEventListener('click', () => switchAuthTab('register'));
+    }
 
-        tabRegister.addEventListener('click', () => {
-            tabRegister.classList.add('text-cyan-400', 'border-cyan-400');
-            tabRegister.classList.remove('text-gray-400', 'border-transparent');
-            tabLogin.classList.remove('text-cyan-400', 'border-cyan-400');
-            tabLogin.classList.add('text-gray-400', 'border-transparent');
-            boxRegister.classList.remove('hidden');
-            boxLogin.classList.add('hidden');
+    const btnBackLogin = document.getElementById('btnBackToProfileFromLogin');
+    if (btnBackLogin) {
+        btnBackLogin.addEventListener('click', () => switchAuthTab('profile'));
+    }
+
+    const btnBackReg = document.getElementById('btnBackToProfileFromReg');
+    if (btnBackReg) {
+        btnBackReg.addEventListener('click', () => switchAuthTab('profile'));
+    }
+
+    const btnSwitchAccountFromProfile = document.getElementById('btnSwitchAccountFromProfile');
+    if (btnSwitchAccountFromProfile) {
+        btnSwitchAccountFromProfile.addEventListener('click', () => switchAuthTab('login'));
+    }
+
+    const btnLogoutProfile = document.getElementById('btnLogoutProfile');
+    if (btnLogoutProfile) {
+        btnLogoutProfile.addEventListener('click', () => {
+            window.smartUpsAuth.logout();
+            closeLoginModal();
+            window.showToast("Signed out. Authentication required to access system.", "info");
         });
     }
 
-    // Logout button
+    // Logout button in switch account form
     const btnLogout = document.getElementById('btnLogout');
     if (btnLogout) {
         btnLogout.addEventListener('click', () => {
@@ -244,7 +257,153 @@ function setupAuthListeners() {
             window.showToast("Signed out. Authentication required to access system.", "info");
         });
     }
+}
 
+function openProfileModal() {
+    const modalAuth = document.getElementById('authModal');
+    if (!modalAuth) return;
+
+    renderProfileView();
+    switchAuthTab('profile');
+
+    modalAuth.classList.remove('hidden');
+    modalAuth.classList.add('flex');
+}
+
+function switchAuthTab(tabName) {
+    const tabProfile = document.getElementById('tabAuthProfile');
+    const tabLogin = document.getElementById('tabAuthLogin');
+    const tabRegister = document.getElementById('tabAuthRegister');
+
+    const boxProfile = document.getElementById('authProfileBox');
+    const boxLogin = document.getElementById('authLoginBox');
+    const boxRegister = document.getElementById('authRegisterBox');
+
+    const titleIcon = document.getElementById('authModalTitleIcon');
+    const titleText = document.getElementById('authModalTitleText');
+    const subtitle = document.getElementById('authModalSubtitle');
+
+    const activeClasses = ['text-cyan-400', 'border-cyan-400'];
+    const inactiveClasses = ['text-slate-400', 'border-transparent'];
+
+    [tabProfile, tabLogin, tabRegister].forEach(t => {
+        if (!t) return;
+        t.classList.remove(...activeClasses);
+        t.classList.add(...inactiveClasses);
+    });
+
+    if (boxProfile) boxProfile.classList.add('hidden');
+    if (boxLogin) boxLogin.classList.add('hidden');
+    if (boxRegister) boxRegister.classList.add('hidden');
+
+    if (tabName === 'profile') {
+        if (tabProfile) {
+            tabProfile.classList.add(...activeClasses);
+            tabProfile.classList.remove(...inactiveClasses);
+        }
+        if (boxProfile) boxProfile.classList.remove('hidden');
+        if (titleIcon) titleIcon.textContent = '👤';
+        if (titleText) titleText.textContent = 'User Profile';
+        if (subtitle) subtitle.textContent = 'Active session credentials & role permissions';
+        renderProfileView();
+    } else if (tabName === 'login') {
+        if (tabLogin) {
+            tabLogin.classList.add(...activeClasses);
+            tabLogin.classList.remove(...inactiveClasses);
+        }
+        if (boxLogin) boxLogin.classList.remove('hidden');
+        if (titleIcon) titleIcon.textContent = '🔐';
+        if (titleText) titleText.textContent = 'Switch Account';
+        if (subtitle) subtitle.textContent = 'Sign in with credentials or demo profiles';
+    } else if (tabName === 'register') {
+        if (tabRegister) {
+            tabRegister.classList.add(...activeClasses);
+            tabRegister.classList.remove(...inactiveClasses);
+        }
+        if (boxRegister) boxRegister.classList.remove('hidden');
+        if (titleIcon) titleIcon.textContent = '✨';
+        if (titleText) titleText.textContent = 'Register New Account';
+        if (subtitle) subtitle.textContent = 'Create a custom household or business profile';
+    }
+}
+
+function renderProfileView() {
+    const user = window.smartUpsAuth.getCurrentUser();
+    if (!user) return;
+
+    const elAvatar = document.getElementById('profileAvatar');
+    const elName = document.getElementById('profileFullName');
+    const elEmail = document.getElementById('profileEmail');
+    const elBadge = document.getElementById('profileRoleBadge');
+    const elType = document.getElementById('profileAccountType');
+    const elPermToggle = document.getElementById('permToggle');
+    const elPermPair = document.getElementById('permPair');
+    const elPermConfig = document.getElementById('permConfig');
+    const elPermLock = document.getElementById('permAdminLock');
+
+    if (elAvatar) elAvatar.textContent = user.avatar || "⚡";
+    if (elName) elName.textContent = user.name || "SmartUps User";
+    if (elEmail) elEmail.textContent = user.email || "user@smartups.io";
+
+    const roleLabels = {
+        energy_engineer: "ENERGY ENGINEER",
+        business_owner: "BUSINESS OWNER",
+        household_resident: "HOUSEHOLD RESIDENT",
+        office_worker: "OFFICE WORKER",
+        student: "STUDENT",
+        admin: "ADMINISTRATOR"
+    };
+
+    const roleClasses = {
+        energy_engineer: "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40",
+        business_owner: "bg-amber-500/20 text-amber-300 border border-amber-500/40",
+        household_resident: "bg-teal-500/20 text-teal-300 border border-teal-500/40",
+        office_worker: "bg-blue-500/20 text-blue-300 border border-blue-500/40",
+        student: "bg-purple-500/20 text-purple-300 border border-purple-500/40",
+        admin: "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+    };
+
+    if (elBadge) {
+        elBadge.textContent = roleLabels[user.role] || (user.role || '').toUpperCase();
+        elBadge.className = `text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider font-mono ${roleClasses[user.role] || 'bg-gray-700 text-gray-300 border border-gray-600'}`;
+    }
+
+    if (elType) {
+        elType.textContent = user.isCustomAccount ? "Personal Account" : (user.title || "Demo Profile");
+    }
+
+    const canToggle = window.smartUpsAuth.canToggle();
+    const canPair = window.smartUpsAuth.canPair();
+    const canConfig = window.smartUpsAuth.canConfigure();
+    const isAdmin = window.smartUpsAuth.isAdmin();
+
+    if (elPermToggle) {
+        elPermToggle.textContent = canToggle ? "ENABLED" : "RESTRICTED";
+        elPermToggle.className = `px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+            canToggle ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-gray-800 text-gray-400 border border-gray-700"
+        }`;
+    }
+
+    if (elPermPair) {
+        elPermPair.textContent = canPair ? "ENABLED" : "RESTRICTED";
+        elPermPair.className = `px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+            canPair ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-gray-800 text-gray-400 border border-gray-700"
+        }`;
+    }
+
+    if (elPermConfig) {
+        elPermConfig.textContent = canConfig ? "ENABLED" : "VIEW ONLY";
+        elPermConfig.className = `px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+            canConfig ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-gray-800 text-gray-400 border border-gray-700"
+        }`;
+    }
+
+    if (elPermLock) {
+        elPermLock.textContent = isAdmin ? "FULL ACCESS" : "RESTRICTED";
+        elPermLock.className = `px-1.5 py-0.5 rounded text-[10px] font-mono font-bold ${
+            isAdmin ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/30" : "bg-gray-800 text-gray-400 border border-gray-700"
+        }`;
+    }
 }
 
 function updateAuthUI() {
@@ -300,6 +459,7 @@ function updateAuthUI() {
             userRole.className = `text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider font-mono ${roleClasses[user.role] || 'bg-gray-700 text-gray-300'}`;
         }
         if (userAvatar) userAvatar.textContent = user.avatar || "⚡";
+        renderProfileView();
     }
 
     // Disable or enable pairing button based on permissions
@@ -1077,8 +1237,7 @@ function setupModalHandlers() {
 
     if (btnOpenAuth && modalAuth) {
         btnOpenAuth.addEventListener('click', () => {
-            modalAuth.classList.remove('hidden');
-            modalAuth.classList.add('flex');
+            openProfileModal();
         });
     }
 
