@@ -225,9 +225,8 @@ class SmartUpsEngine {
             // Battery voltage curve (54V full down to 42V empty)
             this.data.ups.batteryVoltage = parseFloat((42.0 + (12.0 * (this.data.ups.batteryLevel / 100))).toFixed(1));
 
-            // Check for 30% battery critical alert
-            const isAlarmEnabled = this.data.ups.alarm30PctEnabled !== false;
-            if (this.data.ups.batteryLevel <= 30 && !this.hasAlerted30Pct && isAlarmEnabled) {
+            // Check for 30% battery critical alert (always on)
+            if (this.data.ups.batteryLevel <= 30 && !this.hasAlerted30Pct) {
                 this.hasAlerted30Pct = true;
                 this.trigger30PercentAlert();
             }

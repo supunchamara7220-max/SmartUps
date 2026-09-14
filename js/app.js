@@ -1123,62 +1123,7 @@ function setupBatteryAlertHandlers() {
         openBatteryAlertModal(battLevel);
     });
 
-    // 30% Alarm Toggle State UI Updater
-    const update30AlarmToggleUI = (enabled) => {
-        const isEnabled = enabled !== false;
-        const btnToggle = document.getElementById('btnToggle30Alarm');
-        const dot = document.getElementById('dot30AlarmStatus');
-        const label = document.getElementById('label30AlarmStatus');
-
-        const btnToggleMob = document.getElementById('btnToggle30AlarmMobile');
-        const dotMob = document.getElementById('dot30AlarmStatusMobile');
-        const labelMob = document.getElementById('label30AlarmStatusMobile');
-
-        if (btnToggle && label) {
-            if (isEnabled) {
-                btnToggle.className = "flex items-center gap-2 px-3.5 py-3 rounded-xl bg-amber-950/40 hover:bg-amber-900/50 text-amber-300 border border-amber-500/50 text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-sm shadow-amber-500/10";
-                label.textContent = "30% Alarm: ON";
-                if (dot) dot.className = "w-2 h-2 rounded-full bg-amber-400 inline-block shadow-sm shadow-amber-400/80 animate-pulse";
-            } else {
-                btnToggle.className = "flex items-center gap-2 px-3.5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-500 border border-slate-700 text-xs sm:text-sm font-medium transition-all cursor-pointer";
-                label.textContent = "30% Alarm: MUTED";
-                if (dot) dot.className = "w-2 h-2 rounded-full bg-slate-600 inline-block";
-            }
-        }
-
-        if (btnToggleMob && labelMob) {
-            if (isEnabled) {
-                labelMob.textContent = "Alarm: ON";
-                btnToggleMob.className = "text-xs font-bold text-amber-300 flex items-center gap-1 cursor-pointer";
-                if (dotMob) dotMob.className = "w-1.5 h-1.5 rounded-full bg-amber-400 inline-block animate-pulse";
-            } else {
-                labelMob.textContent = "Alarm: OFF";
-                btnToggleMob.className = "text-xs font-medium text-slate-500 flex items-center gap-1 cursor-pointer";
-                if (dotMob) dotMob.className = "w-1.5 h-1.5 rounded-full bg-slate-600 inline-block";
-            }
-        }
-    };
-
-    // Initialize toggle state from engine data
-    const initialAlarmState = window.smartUpsEngine ? (window.smartUpsEngine.data.ups.alarm30PctEnabled !== false) : true;
-    update30AlarmToggleUI(initialAlarmState);
-
-    // Toggle button click handlers
-    const handleToggleClick = () => {
-        if (!window.smartUpsEngine) return;
-        const nextState = window.smartUpsEngine.toggle30PctAlarm();
-        update30AlarmToggleUI(nextState);
-        window.showToast(
-            nextState ? "⚡ 30% Critical Battery Alarm ENABLED." : "🔇 30% Critical Battery Alarm MUTED.",
-            nextState ? "success" : "warning"
-        );
-    };
-
-    const btnToggle = document.getElementById('btnToggle30Alarm');
-    if (btnToggle) btnToggle.addEventListener('click', handleToggleClick);
-
-    const btnToggleMob = document.getElementById('btnToggle30AlarmMobile');
-    if (btnToggleMob) btnToggleMob.addEventListener('click', handleToggleClick);
+    // 30% Critical Battery Alarm is always ON by default
 
     // Check / Test alert buttons in header (desktop and mobile)
     const btnTest30 = document.getElementById('btnTest30Alert');
@@ -1313,24 +1258,29 @@ function openBatteryAlertModal(battLevel = 30) {
                     const statusText = card.querySelector('.shed-status');
 
                     if (isSelected) {
-                        card.className = "p-3 rounded-xl border border-amber-400 bg-amber-950/40 text-amber-200 shadow-md shadow-amber-950/40 ring-1 ring-amber-400/40 transition-all cursor-pointer flex items-center justify-between gap-3";
+                        card.className = "p-3 rounded-xl border border-cyan-400 bg-cyan-950/40 text-cyan-200 shadow-md shadow-cyan-950/40 ring-1 ring-cyan-400/40 transition-all cursor-pointer flex items-center justify-between gap-3";
                         if (checkBox) {
-                            checkBox.className = "check-box w-5 h-5 rounded-md bg-amber-400 border border-amber-300 text-black flex items-center justify-center text-xs font-bold transition-all";
+                            checkBox.className = "check-box w-5 h-5 rounded-md bg-cyan-400 border border-cyan-300 text-black flex items-center justify-center text-xs font-bold transition-all";
                             checkBox.textContent = "✓";
                         }
                         if (statusText) {
-                            statusText.className = "shed-status text-[10px] text-amber-400 font-mono font-bold";
-                            statusText.textContent = "Will Shed";
+                            statusText.className = "shed-status text-[10px] text-cyan-400 font-mono font-bold";
+                            statusText.textContent = "Keep Online ⚡";
                         }
                     } else {
-                        card.className = "p-3 rounded-xl border border-slate-800 bg-slate-950/60 hover:border-slate-700 transition-all cursor-pointer flex items-center justify-between gap-3 text-slate-300";
+                        const allSelected = selectedIds.size === targetCount;
+                        card.className = allSelected 
+                            ? "p-3 rounded-xl border border-rose-950/80 bg-rose-950/10 hover:border-rose-800/60 transition-all cursor-pointer flex items-center justify-between gap-3 text-slate-400"
+                            : "p-3 rounded-xl border border-slate-800 bg-slate-950/60 hover:border-slate-700 transition-all cursor-pointer flex items-center justify-between gap-3 text-slate-300";
                         if (checkBox) {
                             checkBox.className = "check-box w-5 h-5 rounded-md border border-slate-700 flex items-center justify-center text-xs font-bold transition-all";
                             checkBox.textContent = "";
                         }
                         if (statusText) {
-                            statusText.className = "shed-status text-[10px] text-slate-500 font-mono";
-                            statusText.textContent = "Active";
+                            statusText.className = allSelected 
+                                ? "shed-status text-[10px] text-rose-400 font-mono font-semibold"
+                                : "shed-status text-[10px] text-slate-500 font-mono";
+                            statusText.textContent = allSelected ? "Will Cut 🔌" : "Tap to Keep";
                         }
                     }
                 });
@@ -1340,13 +1290,13 @@ function openBatteryAlertModal(battLevel = 30) {
             if (confirmBtn && confirmBtnText) {
                 if (selectedIds.size === targetCount) {
                     confirmBtn.disabled = false;
-                    confirmBtn.className = "px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-black font-bold text-xs shadow-lg shadow-amber-500/30 transition-all cursor-pointer flex items-center gap-2";
-                    confirmBtnText.textContent = `Cut ${targetCount} Selected Device${targetCount > 1 ? 's' : ''} & Save Reserve (${selectedIds.size}/${targetCount})`;
+                    confirmBtn.className = "px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-black font-bold text-xs shadow-lg shadow-cyan-500/30 transition-all cursor-pointer flex items-center gap-2";
+                    confirmBtnText.textContent = `Keep ${targetCount} Selected Devices & Save Reserve (${selectedIds.size}/${targetCount})`;
                 } else {
                     confirmBtn.disabled = true;
                     confirmBtn.className = "px-4 py-2.5 rounded-xl bg-slate-800 text-slate-600 border border-slate-700 text-xs font-bold transition-all cursor-not-allowed flex items-center gap-2 shadow-md";
                     const remaining = targetCount - selectedIds.size;
-                    confirmBtnText.textContent = `Select ${remaining} more device${remaining > 1 ? 's' : ''} to shed (${selectedIds.size}/${targetCount})`;
+                    confirmBtnText.textContent = `Select ${remaining} more device${remaining > 1 ? 's' : ''} to keep (${selectedIds.size}/${targetCount})`;
                 }
             }
         };
@@ -1366,8 +1316,8 @@ function openBatteryAlertModal(battLevel = 30) {
                     </div>
                 </div>
                 <div class="text-right">
-                    <div class="text-xs font-bold font-mono text-amber-400">${item.watts} W</div>
-                    <div class="shed-status text-[10px] text-slate-500 font-mono">Active</div>
+                    <div class="text-xs font-bold font-mono text-cyan-400">${item.watts} W</div>
+                    <div class="shed-status text-[10px] text-slate-500 font-mono">Tap to Keep</div>
                 </div>
             `;
 
@@ -1378,7 +1328,7 @@ function openBatteryAlertModal(battLevel = 30) {
                     if (selectedIds.size < targetCount) {
                         selectedIds.add(item.id);
                     } else {
-                        window.showToast(`You must select exactly ${targetCount} devices. Uncheck one first.`, "info");
+                        window.showToast(`You must select ${targetCount} devices to keep online. Uncheck one first.`, "info");
                         return;
                     }
                 }
@@ -1394,24 +1344,35 @@ function openBatteryAlertModal(battLevel = 30) {
             confirmBtn.onclick = () => {
                 if (selectedIds.size < targetCount) return;
 
-                const cutNames = [];
-                selectedIds.forEach(id => {
-                    const dev = activeDevices.find(d => d.id === id);
-                    if (dev) cutNames.push(dev.name);
+                const keepDevices = activeDevices.filter(d => selectedIds.has(d.id));
+                const cutDevices = activeDevices.filter(d => !selectedIds.has(d.id));
 
-                    if (dev && dev.type === 'switch') {
-                        window.smartUpsEngine.toggleSwitch(id);
-                    } else if (dev && dev.type === 'outlet') {
-                        window.smartUpsEngine.toggleOutlet(id);
+                const keepNames = keepDevices.map(d => d.name);
+                const cutNames = cutDevices.map(d => d.name);
+
+                // Disconnect unselected active circuits to preserve battery reserve
+                cutDevices.forEach(dev => {
+                    if (dev.type === 'switch') {
+                        window.smartUpsEngine.toggleSwitch(dev.id);
+                    } else if (dev.type === 'outlet') {
+                        window.smartUpsEngine.toggleOutlet(dev.id);
                     }
                 });
 
                 if (window.smartUpsEngine) {
                     window.smartUpsEngine.playRelaySound(false);
-                    window.smartUpsEngine.logEvent('warning', `30% Battery Shedding: Cut power to ${cutNames.join(', ')} to preserve battery reserve.`);
+                    if (cutNames.length > 0) {
+                        window.smartUpsEngine.logEvent('warning', `30% Battery Reserve: Kept ${keepNames.join(', ')} online. Disconnected ${cutNames.join(', ')} to preserve battery reserve.`);
+                    } else {
+                        window.smartUpsEngine.logEvent('info', `30% Battery Reserve: Keeping ${keepNames.join(', ')} online.`);
+                    }
                 }
 
-                window.showToast(`Emergency Shedding: Powered down ${cutNames.join(', ')}!`, "warning");
+                if (cutNames.length > 0) {
+                    window.showToast(`30% Battery Reserve: Kept ${keepNames.join(', ')} online (cut ${cutNames.length} circuits)!`, "warning");
+                } else {
+                    window.showToast(`30% Battery Reserve: Kept ${keepNames.join(', ')} online!`, "success");
+                }
                 closeBatteryAlertModal();
             };
         }
