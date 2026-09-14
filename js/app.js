@@ -1123,7 +1123,64 @@ function setupBatteryAlertHandlers() {
         openBatteryAlertModal(battLevel);
     });
 
-    // Test alert buttons in header (desktop and mobile)
+    // 30% Alarm Toggle State UI Updater
+    const update30AlarmToggleUI = (enabled) => {
+        const isEnabled = enabled !== false;
+        const btnToggle = document.getElementById('btnToggle30Alarm');
+        const dot = document.getElementById('dot30AlarmStatus');
+        const label = document.getElementById('label30AlarmStatus');
+
+        const btnToggleMob = document.getElementById('btnToggle30AlarmMobile');
+        const dotMob = document.getElementById('dot30AlarmStatusMobile');
+        const labelMob = document.getElementById('label30AlarmStatusMobile');
+
+        if (btnToggle && label) {
+            if (isEnabled) {
+                btnToggle.className = "flex items-center gap-2 px-3.5 py-3 rounded-xl bg-amber-950/40 hover:bg-amber-900/50 text-amber-300 border border-amber-500/50 text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-sm shadow-amber-500/10";
+                label.textContent = "30% Alarm: ON";
+                if (dot) dot.className = "w-2 h-2 rounded-full bg-amber-400 inline-block shadow-sm shadow-amber-400/80 animate-pulse";
+            } else {
+                btnToggle.className = "flex items-center gap-2 px-3.5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-500 border border-slate-700 text-xs sm:text-sm font-medium transition-all cursor-pointer";
+                label.textContent = "30% Alarm: MUTED";
+                if (dot) dot.className = "w-2 h-2 rounded-full bg-slate-600 inline-block";
+            }
+        }
+
+        if (btnToggleMob && labelMob) {
+            if (isEnabled) {
+                labelMob.textContent = "Alarm: ON";
+                btnToggleMob.className = "text-xs font-bold text-amber-300 flex items-center gap-1 cursor-pointer";
+                if (dotMob) dotMob.className = "w-1.5 h-1.5 rounded-full bg-amber-400 inline-block animate-pulse";
+            } else {
+                labelMob.textContent = "Alarm: OFF";
+                btnToggleMob.className = "text-xs font-medium text-slate-500 flex items-center gap-1 cursor-pointer";
+                if (dotMob) dotMob.className = "w-1.5 h-1.5 rounded-full bg-slate-600 inline-block";
+            }
+        }
+    };
+
+    // Initialize toggle state from engine data
+    const initialAlarmState = window.smartUpsEngine ? (window.smartUpsEngine.data.ups.alarm30PctEnabled !== false) : true;
+    update30AlarmToggleUI(initialAlarmState);
+
+    // Toggle button click handlers
+    const handleToggleClick = () => {
+        if (!window.smartUpsEngine) return;
+        const nextState = window.smartUpsEngine.toggle30PctAlarm();
+        update30AlarmToggleUI(nextState);
+        window.showToast(
+            nextState ? "⚡ 30% Critical Battery Alarm ENABLED." : "🔇 30% Critical Battery Alarm MUTED.",
+            nextState ? "success" : "warning"
+        );
+    };
+
+    const btnToggle = document.getElementById('btnToggle30Alarm');
+    if (btnToggle) btnToggle.addEventListener('click', handleToggleClick);
+
+    const btnToggleMob = document.getElementById('btnToggle30AlarmMobile');
+    if (btnToggleMob) btnToggleMob.addEventListener('click', handleToggleClick);
+
+    // Check / Test alert buttons in header (desktop and mobile)
     const btnTest30 = document.getElementById('btnTest30Alert');
     if (btnTest30) {
         btnTest30.addEventListener('click', () => {

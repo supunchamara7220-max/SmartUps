@@ -226,7 +226,8 @@ class SmartUpsEngine {
             this.data.ups.batteryVoltage = parseFloat((42.0 + (12.0 * (this.data.ups.batteryLevel / 100))).toFixed(1));
 
             // Check for 30% battery critical alert
-            if (this.data.ups.batteryLevel <= 30 && !this.hasAlerted30Pct) {
+            const isAlarmEnabled = this.data.ups.alarm30PctEnabled !== false;
+            if (this.data.ups.batteryLevel <= 30 && !this.hasAlerted30Pct && isAlarmEnabled) {
                 this.hasAlerted30Pct = true;
                 this.trigger30PercentAlert();
             }
@@ -514,6 +515,17 @@ class SmartUpsEngine {
                 batteryLevel: Math.round(this.data.ups.batteryLevel)
             }
         }));
+    }
+
+    // Toggle 30% Battery Alarm Enabled/Muted
+    toggle30PctAlarm() {
+        if (this.data.ups.alarm30PctEnabled === undefined) {
+            this.data.ups.alarm30PctEnabled = true;
+        }
+        this.data.ups.alarm30PctEnabled = !this.data.ups.alarm30PctEnabled;
+        saveSystemData(this.data);
+        this.notifyUpdate();
+        return this.data.ups.alarm30PctEnabled;
     }
 
     // Set UPS Operating Mode
