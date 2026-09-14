@@ -1,0 +1,19 @@
+{
+  "name": "smartups",
+  "version": "4.3.0",
+  "description": "SmartUps Pro - Intelligent Power & Device Management Web Application",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "echo Static build complete"
+  },
+  "keywords": [
+    "smartups",
+    "ups",
+    "power-management",
+    "dashboard",
+    "iot"
+  ],
+  "author": "SmartUps Team",
+  "license": "MIT"
+}

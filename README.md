@@ -58,6 +58,26 @@ A modernized, high-performance Smart Uninterruptible Power Supply (UPS) control 
 
 ---
 
+## ⚡ How to Host on Vercel
+
+### Method 1: Git Continuous Deployment (Connected to GitHub)
+1. Go to [https://vercel.com/new](https://vercel.com/new).
+2. Connect your GitHub account and import `supunchamara7220-max/SmartUps`.
+3. Vercel automatically detects `vercel.json` and `package.json`:
+   - **Framework Preset**: *Other*
+   - **Root Directory**: `./`
+   - **Build Command**: `echo Static build complete`
+   - **Output Directory**: *(default)*
+4. Click **Deploy**! Every push to `main` will automatically build and deploy.
+
+### Method 2: Vercel CLI
+```bash
+npm i -g vercel
+vercel
+```
+
+---
+
 ## 💻 Running Locally
 
 ### Option 1: 1-Click Launch (Windows)
