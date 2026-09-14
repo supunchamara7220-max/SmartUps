@@ -177,6 +177,10 @@
                     <span>⚡</span>
                     <span>SIMULATE POWER OUTAGE</span>
                 </button>
+                <button id="btnTest30Alert" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-amber-400 border border-amber-500/40 text-xs font-medium transition-colors cursor-pointer flex items-center gap-1.5" title="Test 30% Critical Battery Alert Popup & Device Shedding">
+                    <span>⚠️</span>
+                    <span>Test 30% Alert</span>
+                </button>
                 <button id="btnToggleSound" class="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700/60 text-xs font-medium transition-colors cursor-pointer">
                     🔊 Audio ON
                 </button>
@@ -206,6 +210,9 @@
     <div class="md:hidden flex items-center justify-between px-4 py-2 bg-slate-900/60 border-b border-slate-800">
         <button id="btnSimulateBlackoutMobile" onclick="document.getElementById('btnSimulateBlackout').click()" class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
             <span>⚡</span> Simulate Outage
+        </button>
+        <button id="btnTest30AlertMobile" class="text-xs font-bold text-amber-400 flex items-center gap-1">
+            <span>⚠️</span> 30% Alert
         </button>
         <span id="upsStatusBadge" class="text-[11px] text-emerald-400 font-mono">ONLINE</span>
     </div>
@@ -774,6 +781,75 @@
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- ==================================================================== -->
+    <!-- MODAL 3: 30% Critical Battery Load Shedding Alert Modal             -->
+    <!-- ==================================================================== -->
+    <div id="batteryAlertModal" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md hidden items-center justify-center p-3 sm:p-5 overflow-y-auto">
+        <div class="glass-panel-glow w-full max-w-lg rounded-2xl overflow-hidden border border-amber-500/50 bg-slate-900 shadow-2xl animate-fade-in my-auto flex flex-col">
+            
+            <!-- Alert Modal Header -->
+            <div class="p-4 sm:p-5 border-b border-slate-800 bg-slate-950/90 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-400 flex items-center justify-center text-xl font-bold animate-pulse flex-shrink-0">
+                        ⚠️
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-extrabold text-base text-white tracking-wide">30% Battery Reserve Alert</h3>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-mono font-bold animate-pulse">CRITICAL</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-0.5 font-mono">Select 2 active devices below to disconnect immediately and save battery</p>
+                    </div>
+                </div>
+                <button id="btnCloseBatteryAlert" class="text-slate-400 hover:text-white text-lg p-1 font-bold cursor-pointer" title="Dismiss Alert">✕</button>
+            </div>
+
+            <!-- Body -->
+            <div class="p-4 sm:p-5 space-y-4 max-h-[60vh] overflow-y-auto custom-scrollbar">
+                
+                <!-- Status Banner -->
+                <div class="p-3 rounded-xl bg-amber-950/30 border border-amber-500/30 flex items-center justify-between text-xs">
+                    <div class="text-slate-300">
+                        <span>Current Battery Level:</span>
+                        <strong class="text-amber-400 font-mono text-sm ml-1" id="alertModalBattLevel">30%</strong>
+                    </div>
+                    <div class="px-2.5 py-1 rounded-lg bg-slate-900 text-[11px] font-mono font-bold border border-slate-700">
+                        <span class="text-cyan-400" id="alertSelectedCount">0</span> / <span id="alertTargetCount">2</span> selected
+                    </div>
+                </div>
+
+                <!-- Active Devices List -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between text-xs text-slate-400 font-mono px-1">
+                        <span>ACTIVE DEVICES DRAWING POWER:</span>
+                        <span class="text-[11px] text-slate-500">Tap 2 devices to shed</span>
+                    </div>
+
+                    <div id="batteryAlertDevicesList" class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        <!-- Populated dynamically with active switches and outlets -->
+                    </div>
+                </div>
+
+                <!-- Empty state notice if no devices active -->
+                <div id="batteryAlertEmptyNotice" class="hidden py-6 text-center text-xs text-slate-400 space-y-1">
+                    <p class="text-emerald-400 font-semibold text-sm">✓ No active devices drawing power</p>
+                    <p class="text-slate-500 text-[11px]">All non-essential circuits are already disconnected. Battery reserve is safe.</p>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="p-4 sm:p-5 border-t border-slate-800 bg-slate-950/80 flex items-center justify-between gap-3 shrink-0">
+                <button type="button" id="btnCancelBatteryAlert" class="px-3 py-2 rounded-xl text-xs font-semibold text-slate-400 hover:text-white transition-colors cursor-pointer">
+                    Dismiss Warning
+                </button>
+                <button type="button" id="btnConfirmBatteryShed" disabled class="px-4 py-2.5 rounded-xl bg-slate-800 text-slate-600 border border-slate-700 text-xs font-bold transition-all cursor-not-allowed flex items-center gap-2 shadow-md">
+                    <span>⚡</span>
+                    <span id="btnConfirmBatteryShedText">Select 2 Devices to Shed</span>
+                </button>
+            </div>
         </div>
     </div>
 

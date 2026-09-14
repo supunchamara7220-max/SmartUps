@@ -10,6 +10,7 @@ class SmartUpsEngine {
         this.audioCtx = null;
         this.listeners = [];
         this.timerInterval = null;
+        this.hasAlerted30Pct = false;
 
         this.initAudio();
         this.startSimulationLoop();
@@ -224,6 +225,12 @@ class SmartUpsEngine {
             // Battery voltage curve (54V full down to 42V empty)
             this.data.ups.batteryVoltage = parseFloat((42.0 + (12.0 * (this.data.ups.batteryLevel / 100))).toFixed(1));
 
+            // Check for 30% battery critical alert
+            if (this.data.ups.batteryLevel <= 30 && !this.hasAlerted30Pct) {
+                this.hasAlerted30Pct = true;
+                this.trigger30PercentAlert();
+            }
+
             // Auto load shedding at critical battery levels
             if (this.data.ups.batteryLevel <= 25) {
                 this.performEmergencyLoadShedding();
@@ -245,6 +252,9 @@ class SmartUpsEngine {
             if (this.data.ups.batteryLevel < 100) {
                 this.data.ups.batteryLevel = Math.min(100, parseFloat((this.data.ups.batteryLevel + 0.15).toFixed(2)));
                 this.data.ups.batteryVoltage = parseFloat((42.0 + (12.0 * (this.data.ups.batteryLevel / 100))).toFixed(1));
+            }
+            if (this.data.ups.batteryLevel > 35) {
+                this.hasAlerted30Pct = false;
             }
         }
 
@@ -486,11 +496,24 @@ class SmartUpsEngine {
                 }
             });
         } else {
+            this.hasAlerted30Pct = false;
             this.playChime();
             this.logEvent("success", "SIMULATION: Utility Grid Power Restored. Inverter synchronized and battery charging.");
         }
         saveSystemData(this.data);
         this.notifyUpdate();
+    }
+
+    // Trigger 30% Battery Critical Alert & Shedding Workflow
+    trigger30PercentAlert(force = false) {
+        if (force) {
+            this.hasAlerted30Pct = true;
+        }
+        window.dispatchEvent(new CustomEvent('smartups:battery-30-alert', {
+            detail: {
+                batteryLevel: Math.round(this.data.ups.batteryLevel)
+            }
+        }));
     }
 
     // Set UPS Operating Mode

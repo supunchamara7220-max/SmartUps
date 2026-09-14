@@ -58,6 +58,7 @@ function initApp() {
     setupSimulatorControls();
     setupModalHandlers();
     setupQuickActions();
+    setupBatteryAlertHandlers();
 
     // Initial render
     updateAuthUI();
@@ -1097,4 +1098,279 @@ function closeLoginModal() {
 function safeSetText(id, text) {
     const el = document.getElementById(id);
     if (el) el.textContent = text;
+}
+
+// -------------------------------------------------------------
+// 30% Battery Critical Alert & Device Shedding Modal Controller
+// -------------------------------------------------------------
+function setupBatteryAlertHandlers() {
+    // Request web notification permission on first user click anywhere
+    const requestNotifOnce = () => {
+        if ('Notification' in window && Notification.permission === 'default') {
+            try {
+                Notification.requestPermission();
+            } catch (e) {
+                console.warn("Could not request notification permission", e);
+            }
+        }
+        document.removeEventListener('click', requestNotifOnce);
+    };
+    document.addEventListener('click', requestNotifOnce, { once: true });
+
+    // Listen for custom 30% battery event from engine
+    window.addEventListener('smartups:battery-30-alert', (e) => {
+        const battLevel = (e.detail && e.detail.batteryLevel !== undefined) ? e.detail.batteryLevel : 30;
+        openBatteryAlertModal(battLevel);
+    });
+
+    // Test alert buttons in header (desktop and mobile)
+    const btnTest30 = document.getElementById('btnTest30Alert');
+    if (btnTest30) {
+        btnTest30.addEventListener('click', () => {
+            if (window.smartUpsEngine) {
+                window.smartUpsEngine.trigger30PercentAlert(true);
+            } else {
+                openBatteryAlertModal(30);
+            }
+        });
+    }
+
+    const btnTest30Mob = document.getElementById('btnTest30AlertMobile');
+    if (btnTest30Mob) {
+        btnTest30Mob.addEventListener('click', () => {
+            if (window.smartUpsEngine) {
+                window.smartUpsEngine.trigger30PercentAlert(true);
+            } else {
+                openBatteryAlertModal(30);
+            }
+        });
+    }
+
+    // Modal dismiss buttons
+    const btnCloseAlert = document.getElementById('btnCloseBatteryAlert');
+    const btnCancelAlert = document.getElementById('btnCancelBatteryAlert');
+    if (btnCloseAlert) btnCloseAlert.addEventListener('click', closeBatteryAlertModal);
+    if (btnCancelAlert) btnCancelAlert.addEventListener('click', closeBatteryAlertModal);
+}
+
+function openBatteryAlertModal(battLevel = 30) {
+    // 1. Dispatch Web Notification
+    if ('Notification' in window) {
+        const fireNotification = () => {
+            try {
+                new Notification('⚠️ 30% Battery Reserve Alert - SmartUps', {
+                    body: `Battery reserve dropped to ${battLevel}%. Select 2 active devices to power down immediately to preserve runtime.`,
+                    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23f59e0b"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
+                    tag: 'smartups-battery-30-alert',
+                    renotify: true
+                });
+            } catch (err) {
+                console.warn("Web Notification dispatch error:", err);
+            }
+        };
+
+        if (Notification.permission === 'granted') {
+            fireNotification();
+        } else if (Notification.permission !== 'denied') {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    fireNotification();
+                }
+            });
+        }
+    }
+
+    // 2. Play Audible Warning Alarm
+    if (window.smartUpsEngine) {
+        window.smartUpsEngine.playBeep(880, 0.2, 3);
+    }
+
+    // 3. Populate Modal Elements
+    const modal = document.getElementById('batteryAlertModal');
+    const battLevelText = document.getElementById('alertModalBattLevel');
+    const selectedCountEl = document.getElementById('alertSelectedCount');
+    const targetCountEl = document.getElementById('alertTargetCount');
+    const listEl = document.getElementById('batteryAlertDevicesList');
+    const emptyNoticeEl = document.getElementById('batteryAlertEmptyNotice');
+    const confirmBtn = document.getElementById('btnConfirmBatteryShed');
+    const confirmBtnText = document.getElementById('btnConfirmBatteryShedText');
+
+    if (battLevelText) battLevelText.textContent = `${battLevel}%`;
+
+    // Retrieve live active devices
+    const engineData = window.smartUpsEngine ? window.smartUpsEngine.data : { switches: [], outlets: [] };
+    const activeSwitches = (engineData.switches || []).filter(s => s.state);
+    const activeOutlets = (engineData.outlets || []).filter(s => s.state);
+
+    const activeDevices = [
+        ...activeSwitches.map(sw => ({
+            id: sw.id,
+            type: 'switch',
+            name: sw.name,
+            room: sw.room,
+            watts: sw.currentLoadWatts || 0,
+            icon: '⚡'
+        })),
+        ...activeOutlets.map(sock => ({
+            id: sock.id,
+            type: 'outlet',
+            name: sock.name,
+            room: sock.room,
+            watts: sock.powerWatts || 0,
+            icon: '🔌'
+        }))
+    ];
+
+    const targetCount = Math.min(2, activeDevices.length);
+    const selectedIds = new Set();
+
+    if (activeDevices.length === 0) {
+        if (emptyNoticeEl) emptyNoticeEl.classList.remove('hidden');
+        if (listEl) listEl.classList.add('hidden');
+        if (selectedCountEl) selectedCountEl.textContent = "0";
+        if (targetCountEl) targetCountEl.textContent = "0";
+
+        if (confirmBtn) {
+            confirmBtn.disabled = false;
+            confirmBtn.className = "px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-xs shadow-md transition-all cursor-pointer flex items-center gap-2";
+            if (confirmBtnText) confirmBtnText.textContent = "Acknowledge & Close";
+            confirmBtn.onclick = () => closeBatteryAlertModal();
+        }
+    } else {
+        if (emptyNoticeEl) emptyNoticeEl.classList.add('hidden');
+        if (listEl) {
+            listEl.classList.remove('hidden');
+            listEl.innerHTML = '';
+        }
+
+        const updateSelectionUI = () => {
+            if (selectedCountEl) selectedCountEl.textContent = selectedIds.size;
+            if (targetCountEl) targetCountEl.textContent = targetCount;
+
+            // Update card styles
+            if (listEl) {
+                listEl.querySelectorAll('[data-id]').forEach(card => {
+                    const id = card.dataset.id;
+                    const isSelected = selectedIds.has(id);
+                    const checkBox = card.querySelector('.check-box');
+                    const statusText = card.querySelector('.shed-status');
+
+                    if (isSelected) {
+                        card.className = "p-3 rounded-xl border border-amber-400 bg-amber-950/40 text-amber-200 shadow-md shadow-amber-950/40 ring-1 ring-amber-400/40 transition-all cursor-pointer flex items-center justify-between gap-3";
+                        if (checkBox) {
+                            checkBox.className = "check-box w-5 h-5 rounded-md bg-amber-400 border border-amber-300 text-black flex items-center justify-center text-xs font-bold transition-all";
+                            checkBox.textContent = "✓";
+                        }
+                        if (statusText) {
+                            statusText.className = "shed-status text-[10px] text-amber-400 font-mono font-bold";
+                            statusText.textContent = "Will Shed";
+                        }
+                    } else {
+                        card.className = "p-3 rounded-xl border border-slate-800 bg-slate-950/60 hover:border-slate-700 transition-all cursor-pointer flex items-center justify-between gap-3 text-slate-300";
+                        if (checkBox) {
+                            checkBox.className = "check-box w-5 h-5 rounded-md border border-slate-700 flex items-center justify-center text-xs font-bold transition-all";
+                            checkBox.textContent = "";
+                        }
+                        if (statusText) {
+                            statusText.className = "shed-status text-[10px] text-slate-500 font-mono";
+                            statusText.textContent = "Active";
+                        }
+                    }
+                });
+            }
+
+            // Update Confirm Button
+            if (confirmBtn && confirmBtnText) {
+                if (selectedIds.size === targetCount) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.className = "px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-400 hover:to-orange-500 text-black font-bold text-xs shadow-lg shadow-amber-500/30 transition-all cursor-pointer flex items-center gap-2";
+                    confirmBtnText.textContent = `Cut ${targetCount} Selected Device${targetCount > 1 ? 's' : ''} & Save Reserve (${selectedIds.size}/${targetCount})`;
+                } else {
+                    confirmBtn.disabled = true;
+                    confirmBtn.className = "px-4 py-2.5 rounded-xl bg-slate-800 text-slate-600 border border-slate-700 text-xs font-bold transition-all cursor-not-allowed flex items-center gap-2 shadow-md";
+                    const remaining = targetCount - selectedIds.size;
+                    confirmBtnText.textContent = `Select ${remaining} more device${remaining > 1 ? 's' : ''} to shed (${selectedIds.size}/${targetCount})`;
+                }
+            }
+        };
+
+        // Render card for each active device
+        activeDevices.forEach(item => {
+            const card = document.createElement('div');
+            card.className = "p-3 rounded-xl border border-slate-800 bg-slate-950/60 hover:border-slate-700 transition-all cursor-pointer flex items-center justify-between gap-3 text-slate-300";
+            card.dataset.id = item.id;
+            card.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <span class="check-box w-5 h-5 rounded-md border border-slate-700 flex items-center justify-center text-xs font-bold transition-all"></span>
+                    <div class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center text-sm">${item.icon}</div>
+                    <div>
+                        <div class="text-xs font-bold text-white">${item.name}</div>
+                        <div class="text-[10px] text-slate-400 font-mono">${item.room} • <span class="capitalize">${item.type}</span></div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-xs font-bold font-mono text-amber-400">${item.watts} W</div>
+                    <div class="shed-status text-[10px] text-slate-500 font-mono">Active</div>
+                </div>
+            `;
+
+            card.addEventListener('click', () => {
+                if (selectedIds.has(item.id)) {
+                    selectedIds.delete(item.id);
+                } else {
+                    if (selectedIds.size < targetCount) {
+                        selectedIds.add(item.id);
+                    } else {
+                        window.showToast(`You must select exactly ${targetCount} devices. Uncheck one first.`, "info");
+                        return;
+                    }
+                }
+                updateSelectionUI();
+            });
+
+            if (listEl) listEl.appendChild(card);
+        });
+
+        updateSelectionUI();
+
+        if (confirmBtn) {
+            confirmBtn.onclick = () => {
+                if (selectedIds.size < targetCount) return;
+
+                const cutNames = [];
+                selectedIds.forEach(id => {
+                    const dev = activeDevices.find(d => d.id === id);
+                    if (dev) cutNames.push(dev.name);
+
+                    if (dev && dev.type === 'switch') {
+                        window.smartUpsEngine.toggleSwitch(id);
+                    } else if (dev && dev.type === 'outlet') {
+                        window.smartUpsEngine.toggleOutlet(id);
+                    }
+                });
+
+                if (window.smartUpsEngine) {
+                    window.smartUpsEngine.playRelaySound(false);
+                    window.smartUpsEngine.logEvent('warning', `30% Battery Shedding: Cut power to ${cutNames.join(', ')} to preserve battery reserve.`);
+                }
+
+                window.showToast(`Emergency Shedding: Powered down ${cutNames.join(', ')}!`, "warning");
+                closeBatteryAlertModal();
+            };
+        }
+    }
+
+    // Display modal in the middle of the screen
+    if (modal) {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    }
+}
+
+function closeBatteryAlertModal() {
+    const modal = document.getElementById('batteryAlertModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    }
 }
