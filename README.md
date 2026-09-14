@@ -85,7 +85,7 @@ Double-click `start.bat`. It will start the local HTTP server and open `http://l
 
 ### Option 2: Command Line
 ```bash
-node server.js
+node local-server.js
 ```
 Then visit [http://localhost:3000](http://localhost:3000).
 
