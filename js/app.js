@@ -568,8 +568,6 @@ function renderSwitchesList(switches) {
                     ? 'bg-gray-800/80 border-cyan-500/40 shadow-lg shadow-cyan-950/20'
                     : 'bg-gray-900/60 border-gray-800 opacity-80'
             }">
-                ${sw.isNewlyPaired ? `<span class="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500 text-black animate-pulse">NEW</span>` : ''}
-
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg ${
@@ -578,7 +576,10 @@ function renderSwitchesList(switches) {
                             ⚡
                         </div>
                         <div>
-                            <h4 class="font-bold text-white text-sm tracking-wide">${sw.name}</h4>
+                            <div class="flex items-center gap-2">
+                                <h4 class="font-bold text-white text-sm tracking-wide">${sw.name}</h4>
+                                ${sw.isNewlyPaired ? `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-400 text-black animate-pulse leading-none tracking-wider">NEW</span>` : ''}
+                            </div>
                             <div class="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
                                 <span class="text-gray-400 font-mono">${sw.room}</span>
                                 <span>•</span>
@@ -847,8 +848,6 @@ function renderOutletsList(outlets) {
                     ? 'bg-gray-800/80 border-emerald-500/40 shadow-lg shadow-emerald-950/20'
                     : 'bg-gray-900/60 border-gray-800 opacity-70'
             }">
-                ${sock.isNewlyPaired ? `<span class="absolute top-2 right-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500 text-black animate-pulse">NEW</span>` : ''}
-
                 <div class="flex items-start justify-between mb-3">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg ${
@@ -857,7 +856,10 @@ function renderOutletsList(outlets) {
                             🔌
                         </div>
                         <div>
-                            <h4 class="font-bold text-white text-sm">${sock.name}</h4>
+                            <div class="flex items-center gap-2">
+                                <h4 class="font-bold text-white text-sm">${sock.name}</h4>
+                                ${sock.isNewlyPaired ? `<span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-400 text-black animate-pulse leading-none tracking-wider">NEW</span>` : ''}
+                            </div>
                             <div class="flex items-center gap-2 text-xs text-gray-400 mt-0.5">
                                 <span>${sock.room}</span>
                                 <span>•</span>
